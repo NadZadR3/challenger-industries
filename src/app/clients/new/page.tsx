@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useClientStore } from "@/lib/store/client-store";
+import { useHydrated } from "@/lib/use-hydrated";
 import { toast } from "sonner";
 import { useState } from "react";
 
 export default function NewClientPage() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const addClient = useClientStore((s) => s.addClient);
 
@@ -27,6 +29,14 @@ export default function NewClientPage() {
     country: "US",
     notes: "",
   });
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));

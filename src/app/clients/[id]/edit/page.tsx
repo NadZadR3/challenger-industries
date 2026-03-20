@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useClientStore } from "@/lib/store/client-store";
+import { useHydrated } from "@/lib/use-hydrated";
 import { toast } from "sonner";
 
 export default function EditClientPage({
@@ -16,6 +17,7 @@ export default function EditClientPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const hydrated = useHydrated();
   const { id } = use(params);
   const router = useRouter();
   const client = useClientStore((s) => s.getClient(id));
@@ -50,6 +52,14 @@ export default function EditClientPage({
       });
     }
   }, [client]);
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   if (!client) {
     return (

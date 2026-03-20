@@ -27,6 +27,7 @@ import {
   calculateLineItemAmount,
   calculateInvoiceTotals,
 } from "@/lib/format";
+import { useHydrated } from "@/lib/use-hydrated";
 import type { LineItem, LineItemType } from "@/lib/types";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ function emptyLineItem(): LineItem {
 }
 
 export default function NewInvoicePage() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const clients = useClientStore((s) => s.clients);
   const createInvoice = useInvoiceStore((s) => s.createInvoice);
@@ -60,6 +62,14 @@ export default function NewInvoicePage() {
   const [discount, setDiscount] = useState("0");
   const [notes, setNotes] = useState("");
   const [terms, setTerms] = useState(profile.defaultPaymentTerms);
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   function updateLineItem(index: number, field: keyof LineItem, value: string | number) {
     setLineItems((prev) => {

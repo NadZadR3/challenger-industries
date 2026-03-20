@@ -27,6 +27,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { useHydrated } from "@/lib/use-hydrated";
 import type { InvoiceStatus } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -43,6 +44,7 @@ export default function InvoiceDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const hydrated = useHydrated();
   const { id } = use(params);
   const router = useRouter();
   const invoice = useInvoiceStore((s) => s.getInvoice(id));
@@ -52,6 +54,14 @@ export default function InvoiceDetailPage({
   );
   const payments = usePaymentStore((s) => s.getInvoicePayments(id));
   const profile = useSettingsStore((s) => s.profile);
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   if (!invoice) {
     return (

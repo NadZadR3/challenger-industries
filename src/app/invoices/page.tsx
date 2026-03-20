@@ -24,6 +24,7 @@ import {
 import { useInvoiceStore } from "@/lib/store/invoice-store";
 import { useClientStore } from "@/lib/store/client-store";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Plus, MoreHorizontal, FileText, Eye, Pencil, Trash2 } from "lucide-react";
 import type { InvoiceStatus } from "@/lib/types";
 import { useState } from "react";
@@ -37,11 +38,20 @@ const statusColors: Record<InvoiceStatus, string> = {
 };
 
 export default function InvoicesPage() {
+  const hydrated = useHydrated();
   const invoices = useInvoiceStore((s) => s.invoices);
   const deleteInvoice = useInvoiceStore((s) => s.deleteInvoice);
   const clients = useClientStore((s) => s.clients);
   const router = useRouter();
   const [tab, setTab] = useState("all");
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   const filtered =
     tab === "all" ? invoices : invoices.filter((inv) => inv.status === tab);

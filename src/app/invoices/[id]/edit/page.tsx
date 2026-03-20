@@ -27,6 +27,7 @@ import {
   calculateInvoiceTotals,
 } from "@/lib/format";
 import type { LineItem, LineItemType } from "@/lib/types";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,6 +36,7 @@ export default function EditInvoicePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const hydrated = useHydrated();
   const { id } = use(params);
   const router = useRouter();
   const invoice = useInvoiceStore((s) => s.getInvoice(id));
@@ -60,6 +62,14 @@ export default function EditInvoicePage({
       setTerms(invoice.terms);
     }
   }, [invoice]);
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   if (!invoice) {
     return (

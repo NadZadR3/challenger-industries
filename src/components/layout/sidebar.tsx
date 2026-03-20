@@ -114,11 +114,9 @@ export function Sidebar() {
       {/* Mobile hamburger + sheet */}
       <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center border-b border-border bg-card px-4 md:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
+          <SheetTrigger render={<Button variant="ghost" size="icon" />}>
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Open menu</span>
           </SheetTrigger>
           <SheetContent side="left" className="w-60 p-0">
             <SheetTitle className="sr-only">Navigation</SheetTitle>

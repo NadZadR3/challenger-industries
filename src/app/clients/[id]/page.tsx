@@ -12,6 +12,7 @@ import { useInvoiceStore } from "@/lib/store/invoice-store";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Separator } from "@/components/ui/separator";
 import { Pencil, Mail, Phone, MapPin, Building, DollarSign, FileText } from "lucide-react";
+import { useHydrated } from "@/lib/use-hydrated";
 import type { InvoiceStatus } from "@/lib/types";
 
 const statusColors: Record<InvoiceStatus, string> = {
@@ -27,10 +28,19 @@ export default function ClientDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const hydrated = useHydrated();
   const { id } = use(params);
   const router = useRouter();
   const client = useClientStore((s) => s.getClient(id));
   const invoices = useInvoiceStore((s) => s.getClientInvoices(id));
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   if (!client) {
     return (

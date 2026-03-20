@@ -12,6 +12,7 @@ import { useSettingsStore } from "@/lib/store/settings-store";
 import type { RegistrationNumber } from "@/lib/types";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { useHydrated } from "@/lib/use-hydrated";
 import {
   Building,
   MapPin,
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
+  const hydrated = useHydrated();
   const profile = useSettingsStore((s) => s.profile);
   const updateProfile = useSettingsStore((s) => s.updateProfile);
 
@@ -34,6 +36,14 @@ export default function SettingsPage() {
   useEffect(() => {
     setForm(profile);
   }, [profile]);
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   function update(field: string, value: string | number) {
     setForm((prev) => ({ ...prev, [field]: value }));

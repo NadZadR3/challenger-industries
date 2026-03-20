@@ -22,13 +22,23 @@ import {
 import { useClientStore } from "@/lib/store/client-store";
 import { useInvoiceStore } from "@/lib/store/invoice-store";
 import { formatCurrency } from "@/lib/format";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Plus, MoreHorizontal, Users, Eye, Pencil, Trash2 } from "lucide-react";
 
 export default function ClientsPage() {
+  const hydrated = useHydrated();
   const clients = useClientStore((s) => s.clients);
   const deleteClient = useClientStore((s) => s.deleteClient);
   const invoices = useInvoiceStore((s) => s.invoices);
   const router = useRouter();
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   const sorted = clients
     .slice()

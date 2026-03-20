@@ -10,6 +10,7 @@ import { useClientStore } from "@/lib/store/client-store";
 import { usePaymentStore } from "@/lib/store/payment-store";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { InvoiceStatus } from "@/lib/types";
+import { useHydrated } from "@/lib/use-hydrated";
 import {
   DollarSign,
   FileText,
@@ -29,9 +30,18 @@ const statusColors: Record<InvoiceStatus, string> = {
 };
 
 export default function DashboardPage() {
+  const hydrated = useHydrated();
   const invoices = useInvoiceStore((s) => s.invoices);
   const clients = useClientStore((s) => s.clients);
   const payments = usePaymentStore((s) => s.payments);
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   const totalRevenue = invoices
     .filter((i) => i.status === "paid")
