@@ -32,7 +32,8 @@ export default function ClientDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const client = useClientStore((s) => s.getClient(id));
-  const invoices = useInvoiceStore((s) => s.getClientInvoices(id));
+  const allInvoices = useInvoiceStore((s) => s.invoices);
+  const invoices = allInvoices.filter((inv) => inv.clientId === id);
 
   if (!hydrated) {
     return (

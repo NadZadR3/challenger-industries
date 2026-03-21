@@ -128,3 +128,202 @@
     @apply font-sans;
   }
 }
+
+/* ── Print styles ────────────────────────────────────────────────── */
+@media print {
+  @page {
+    margin: 8mm;
+    size: A4;
+  }
+
+  /* Force light theme */
+  html, html.dark {
+    color-scheme: light !important;
+    --background: oklch(1 0 0) !important;
+    --foreground: oklch(0.145 0 0) !important;
+    --card: oklch(1 0 0) !important;
+    --card-foreground: oklch(0.145 0 0) !important;
+    --muted: oklch(0.97 0 0) !important;
+    --muted-foreground: oklch(0.4 0 0) !important;
+    --border: oklch(0.85 0 0) !important;
+    --primary: oklch(0.205 0 0) !important;
+    --primary-foreground: oklch(0.985 0 0) !important;
+    --accent: oklch(0.97 0 0) !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* ── HIDE: sidebar, mobile bar, nav, action buttons, status badges ── */
+  aside,
+  nav,
+  header,
+  .no-print,
+  [data-print-hide] {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+
+  /* ── RESET every wrapper to block / full-width / no padding ── */
+  html, body,
+  body > div,
+  body > div > div,
+  body > div > div > div,
+  body > div > div > div > div,
+  main,
+  main > div {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* Kill the flex/grid layout that creates the sidebar + main arrangement */
+  .flex.h-full {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Remove the mobile-header top padding from main */
+  main.pt-14 {
+    padding-top: 0 !important;
+  }
+
+  /* ── The 3-column grid → single column ── */
+  .grid.gap-6.lg\:grid-cols-3 {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Invoice takes full width */
+  .print-full-width,
+  [data-print-invoice] {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Card: no shadow, no border, no rounded corners */
+  [data-print-invoice] [data-slot="card"],
+  [data-print-invoice] .overflow-hidden {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* ── Hide accent bar ── */
+  .print-hide-accent {
+    display: none !important;
+  }
+
+  /* ── Tighten card padding for A4 ── */
+  [data-print-invoice] .p-8 {
+    padding: 12px 16px !important;
+  }
+
+  /* ── Logo: cap height ── */
+  [data-print-invoice] img {
+    max-height: 40px !important;
+    width: auto !important;
+  }
+  [data-print-invoice] img[alt="Company stamp"] {
+    max-height: 64px !important;
+  }
+  [data-print-invoice] img[alt="Signature"] {
+    max-height: 40px !important;
+  }
+
+  /* ── Table: auto layout, smaller text, wrap properly ── */
+  [data-print-invoice] table {
+    width: 100% !important;
+    table-layout: auto !important;
+    font-size: 10px !important;
+    border-collapse: collapse !important;
+  }
+
+  [data-print-invoice] th,
+  [data-print-invoice] td {
+    padding: 4px 6px !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  /* ── Smaller font for the invoice body ── */
+  [data-print-invoice] {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  [data-print-invoice] h2 {
+    font-size: 16px !important;
+  }
+
+  [data-print-invoice] h3 {
+    font-size: 15px !important;
+  }
+
+  [data-print-invoice] .text-xs {
+    font-size: 10px !important;
+  }
+
+  [data-print-invoice] .text-sm {
+    font-size: 11px !important;
+  }
+
+  [data-print-invoice] .font-mono {
+    font-size: inherit !important;
+  }
+
+  /* ── Muted backgrounds ── */
+  .bg-muted\/40,
+  .bg-muted\/20,
+  .bg-primary\/5 {
+    background-color: #f3f4f6 !important;
+  }
+
+  /* ── Prevent page breaks inside sections ── */
+  [data-print-invoice] .rounded-lg {
+    break-inside: avoid !important;
+  }
+
+  /* ── Copy labels: show in print ── */
+  .print-copy-label {
+    display: block !important;
+  }
+
+  /* ── Duplicate copy: show in print, page break before it ── */
+  .print-duplicate-copy {
+    display: block !important;
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  /* ── Each copy is one A4 page ── */
+  .print-invoice-copy {
+    page-break-after: auto !important;
+  }
+
+  /* ── Hide scrollbars ── */
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+}

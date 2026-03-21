@@ -7,7 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useSettingsStore } from "@/lib/store/settings-store";
 import type { RegistrationNumber } from "@/lib/types";
 import { toast } from "sonner";
@@ -24,6 +30,9 @@ import {
   Download,
   Upload,
   Save,
+  ImageIcon,
+  Landmark,
+  PenLine,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -53,6 +62,50 @@ export default function SettingsPage() {
     setForm((prev) => ({
       ...prev,
       address: { ...prev.address, [field]: value },
+    }));
+  }
+
+  function updateAddress2(field: string, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      address2: { ...(prev.address2 ?? { street: "", city: "", state: "", zip: "", country: "India" }), [field]: value },
+    }));
+  }
+
+  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setForm((prev) => ({ ...prev, logo: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleImageUpload(field: "signatureImage" | "stampImage") {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setForm((prev) => ({ ...prev, [field]: dataUrl }));
+      };
+      reader.readAsDataURL(file);
+    };
+  }
+
+  function updateBankDetails(field: string, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      bankDetails: {
+        ...(prev.bankDetails ?? {
+          accountHolder: "", bankName: "", branch: "", accountNumber: "",
+          ifscCode: "", accountType: "current" as const, swiftCode: "", upiId: "",
+        }),
+        [field]: value,
+      },
     }));
   }
 
@@ -193,12 +246,13 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="taxId">Tax ID / EIN</Label>
+                  <Label htmlFor="taxId">GSTN / Tax ID</Label>
                   <Input
                     id="taxId"
                     value={form.taxId}
                     onChange={(e) => update("taxId", e.target.value)}
-                    placeholder="XX-XXXXXXX"
+                    placeholder="07XXXXXXXXXX1ZX"
+                    className="font-mono"
                   />
                 </div>
               </div>
@@ -212,8 +266,8 @@ export default function SettingsPage() {
                   <MapPin className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <CardTitle>Business Address</CardTitle>
-                  <CardDescription>Printed on invoice header</CardDescription>
+                  <CardTitle>Primary Address</CardTitle>
+                  <CardDescription>Main office — printed on invoice header</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -224,7 +278,7 @@ export default function SettingsPage() {
                   id="street"
                   value={form.address.street}
                   onChange={(e) => updateAddress("street", e.target.value)}
-                  placeholder="123 Business Park"
+                  placeholder="2988, Shah Ganj, Ajmeri Gate"
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -237,32 +291,114 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">State / Province</Label>
-                  <Input
-                    id="state"
-                    value={form.address.state}
-                    onChange={(e) => updateAddress("state", e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="zip">ZIP / Postal Code</Label>
+                  <Label htmlFor="zip">PIN Code</Label>
                   <Input
                     id="zip"
                     value={form.address.zip}
                     onChange={(e) => updateAddress("zip", e.target.value)}
                   />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Second Address + Logo ── */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <MapPin className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Second Address</CardTitle>
+                  <CardDescription>Warehouse / branch — also printed on invoice</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="street2">Street Address</Label>
+                <Input
+                  id="street2"
+                  value={form.address2?.street ?? ""}
+                  onChange={(e) => updateAddress2("street", e.target.value)}
+                  placeholder="C-6/1, Street No. 9, Wazirabad Village"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
+                  <Label htmlFor="city2">City</Label>
                   <Input
-                    id="country"
-                    value={form.address.country}
-                    onChange={(e) => updateAddress("country", e.target.value)}
+                    id="city2"
+                    value={form.address2?.city ?? ""}
+                    onChange={(e) => updateAddress2("city", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="zip2">PIN Code</Label>
+                  <Input
+                    id="zip2"
+                    value={form.address2?.zip ?? ""}
+                    onChange={(e) => updateAddress2("zip", e.target.value)}
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+                  <ImageIcon className="h-4 w-4 text-violet-500" />
+                </div>
+                <div>
+                  <CardTitle>Company Logo</CardTitle>
+                  <CardDescription>Displayed on invoice header (PNG, JPG, SVG)</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {form.logo ? (
+                <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.logo}
+                    alt="Company logo"
+                    className="h-16 max-w-[180px] object-contain"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm((prev) => ({ ...prev, logo: "" }))}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center rounded-lg border border-dashed p-8 text-center">
+                  <div>
+                    <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2" />
+                    <p className="text-xs text-muted-foreground">No logo uploaded</p>
+                  </div>
+                </div>
+              )}
+              <label htmlFor="logo-upload">
+                <div className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground transition-colors">
+                  <Upload className="h-3.5 w-3.5" />
+                  {form.logo ? "Change Logo" : "Upload Logo"}
+                </div>
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleLogoUpload}
+                />
+              </label>
             </CardContent>
           </Card>
         </div>
@@ -361,6 +497,231 @@ export default function SettingsPage() {
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* ── Bank Account Details ── */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10">
+                <Landmark className="h-4 w-4 text-sky-500" />
+              </div>
+              <div>
+                <CardTitle>Bank Account Details</CardTitle>
+                <CardDescription>
+                  Printed on invoices so customers can remit payment directly.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="accountHolder">Account Holder Name</Label>
+                <Input
+                  id="accountHolder"
+                  value={form.bankDetails?.accountHolder ?? ""}
+                  onChange={(e) => updateBankDetails("accountHolder", e.target.value)}
+                  placeholder="Challenger Industries"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bankName">Bank Name</Label>
+                <Input
+                  id="bankName"
+                  value={form.bankDetails?.bankName ?? ""}
+                  onChange={(e) => updateBankDetails("bankName", e.target.value)}
+                  placeholder="e.g. State Bank of India"
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="accountNumber">Account Number</Label>
+                <Input
+                  id="accountNumber"
+                  value={form.bankDetails?.accountNumber ?? ""}
+                  onChange={(e) => updateBankDetails("accountNumber", e.target.value)}
+                  placeholder="Account number"
+                  className="font-mono"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ifscCode">IFSC Code</Label>
+                <Input
+                  id="ifscCode"
+                  value={form.bankDetails?.ifscCode ?? ""}
+                  onChange={(e) => updateBankDetails("ifscCode", e.target.value)}
+                  placeholder="e.g. SBIN0001234"
+                  className="font-mono uppercase"
+                  maxLength={11}
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="branch">Branch</Label>
+                <Input
+                  id="branch"
+                  value={form.bankDetails?.branch ?? ""}
+                  onChange={(e) => updateBankDetails("branch", e.target.value)}
+                  placeholder="e.g. Ajmeri Gate, Delhi"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="accountType">Account Type</Label>
+                <Select
+                  value={form.bankDetails?.accountType ?? "current"}
+                  onValueChange={(v) => v && updateBankDetails("accountType", v)}
+                >
+                  <SelectTrigger id="accountType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="current">Current</SelectItem>
+                    <SelectItem value="savings">Savings</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="swiftCode">SWIFT Code</Label>
+                <Input
+                  id="swiftCode"
+                  value={form.bankDetails?.swiftCode ?? ""}
+                  onChange={(e) => updateBankDetails("swiftCode", e.target.value)}
+                  placeholder="e.g. SBININBB"
+                  className="font-mono uppercase"
+                  maxLength={11}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="upiId">UPI ID</Label>
+              <Input
+                id="upiId"
+                value={form.bankDetails?.upiId ?? ""}
+                onChange={(e) => updateBankDetails("upiId", e.target.value)}
+                placeholder="e.g. company@bank"
+                className="font-mono"
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional — shown on invoice if provided, for quick UPI payments.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Signature & Stamp ── */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10">
+                <PenLine className="h-4 w-4 text-rose-500" />
+              </div>
+              <div>
+                <CardTitle>Signature & Stamp</CardTitle>
+                <CardDescription>
+                  Uploaded images appear in the Authorized Signatory section on invoices.
+                  Leave blank to get a dotted line for manual signing.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="authorizedSignatory">Authorized Signatory Name</Label>
+              <Input
+                id="authorizedSignatory"
+                value={form.authorizedSignatory ?? ""}
+                onChange={(e) => update("authorizedSignatory", e.target.value)}
+                placeholder={form.name || "Signatory name"}
+              />
+              <p className="text-xs text-muted-foreground">
+                Falls back to company name if left empty.
+              </p>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {/* Signature upload */}
+              <div className="space-y-2">
+                <Label>Signature Image</Label>
+                {form.signatureImage ? (
+                  <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.signatureImage}
+                      alt="Signature"
+                      className="h-12 max-w-[140px] object-contain"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setForm((prev) => ({ ...prev, signatureImage: "" }))}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                    <p className="text-xs text-muted-foreground">No signature uploaded</p>
+                  </div>
+                )}
+                <label htmlFor="signature-upload">
+                  <div className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground transition-colors">
+                    <Upload className="h-3.5 w-3.5" />
+                    {form.signatureImage ? "Change" : "Upload Signature"}
+                  </div>
+                  <input
+                    id="signature-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleImageUpload("signatureImage")}
+                  />
+                </label>
+              </div>
+
+              {/* Stamp upload */}
+              <div className="space-y-2">
+                <Label>Company Stamp / Seal</Label>
+                {form.stampImage ? (
+                  <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.stampImage}
+                      alt="Company stamp"
+                      className="h-16 max-w-[140px] object-contain"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setForm((prev) => ({ ...prev, stampImage: "" }))}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                    <p className="text-xs text-muted-foreground">No stamp uploaded</p>
+                  </div>
+                )}
+                <label htmlFor="stamp-upload">
+                  <div className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground transition-colors">
+                    <Upload className="h-3.5 w-3.5" />
+                    {form.stampImage ? "Change" : "Upload Stamp"}
+                  </div>
+                  <input
+                    id="stamp-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleImageUpload("stampImage")}
+                  />
+                </label>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

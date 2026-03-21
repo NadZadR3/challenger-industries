@@ -2,15 +2,17 @@ import { format, parseISO, isValid } from "date-fns";
 
 /**
  * Format cents to a display currency string.
- * e.g. 15099 → "$150.99"
+ * Uses en-IN locale for INR (Indian number system — lakhs/crores).
+ * e.g. 150099 → "₹1,500.99"
  */
-export function formatCurrency(cents: number, currency = "USD"): string {
-  const dollars = cents / 100;
-  return new Intl.NumberFormat("en-US", {
+export function formatCurrency(cents: number, currency = "INR"): string {
+  const amount = cents / 100;
+  const locale = currency === "INR" ? "en-IN" : "en-US";
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
-  }).format(dollars);
+  }).format(amount);
 }
 
 /**
@@ -36,6 +38,18 @@ export function formatDateShort(isoDate: string): string {
 }
 
 /**
+ * Format an ISO date string in Indian format (DD/MM/YYYY).
+ * Used on GST tax invoices as required by Indian law.
+ * e.g. "2026-03-20" → "20/03/2026"
+ */
+export function formatDateIndia(isoDate: string): string {
+  if (!isoDate) return "";
+  const date = parseISO(isoDate);
+  if (!isValid(date)) return isoDate;
+  return format(date, "dd/MM/yyyy");
+}
+
+/**
  * Get today's date as ISO string (YYYY-MM-DD).
  */
 export function todayISO(): string {
@@ -57,16 +71,33 @@ export function centsToDollars(cents: number): number {
 }
 
 /**
- * Generate an invoice number from prefix, year, and sequence.
- * e.g. generateInvoiceNumber("INV", 42) → "INV-2026-0042"
+ * Get the Indian financial year string for a given date.
+ * FY runs April 1 → March 31.
+ * e.g. March 2026 → "2025-26", April 2026 → "2026-27"
+ */
+export function getFinancialYear(date: Date = new Date()): string {
+  const month = date.getMonth(); // 0-indexed: 0=Jan, 3=Apr
+  const year = date.getFullYear();
+  if (month >= 3) {
+    // April onwards → current year - next year
+    return `${year}-${String(year + 1).slice(2)}`;
+  }
+  // Jan–Mar → previous year - current year
+  return `${year - 1}-${String(year).slice(2)}`;
+}
+
+/**
+ * Generate an invoice number using Indian financial year format.
+ * e.g. generateInvoiceNumber("INV", 1) → "2025-26/001"
+ * The prefix is NOT used in the number — the FY is the prefix.
  */
 export function generateInvoiceNumber(
-  prefix: string,
+  _prefix: string,
   sequence: number
 ): string {
-  const year = new Date().getFullYear();
-  const padded = String(sequence).padStart(4, "0");
-  return `${prefix}-${year}-${padded}`;
+  const fy = getFinancialYear();
+  const padded = String(sequence).padStart(3, "0");
+  return `${fy}/${padded}`;
 }
 
 /**

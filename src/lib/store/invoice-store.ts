@@ -10,7 +10,11 @@ interface InvoiceState {
   createInvoice: (
     data: Pick<
       Invoice,
-      "clientId" | "issueDate" | "dueDate" | "lineItems" | "discount" | "notes" | "terms" | "recurringTemplateId"
+      | "clientId" | "issueDate" | "dueDate" | "lineItems" | "discount"
+      | "notes" | "terms" | "recurringTemplateId"
+      | "gstType" | "placeOfSupply" | "reverseCharge"
+      | "transporter" | "ewayBill"
+      | "shipToName" | "shipToAddress"
     >
   ) => Invoice;
   updateInvoice: (id: string, data: Partial<Invoice>) => void;
@@ -25,7 +29,11 @@ interface InvoiceState {
 function buildInvoice(
   data: Pick<
     Invoice,
-    "clientId" | "issueDate" | "dueDate" | "lineItems" | "discount" | "notes" | "terms" | "recurringTemplateId"
+    | "clientId" | "issueDate" | "dueDate" | "lineItems" | "discount"
+    | "notes" | "terms" | "recurringTemplateId"
+    | "gstType" | "placeOfSupply" | "reverseCharge"
+    | "transporter" | "ewayBill"
+    | "shipToName" | "shipToAddress"
   >
 ): Invoice {
   const settings = useSettingsStore.getState();
@@ -55,6 +63,13 @@ function buildInvoice(
     notes: data.notes || "",
     terms: data.terms || "",
     recurringTemplateId: data.recurringTemplateId || "",
+    gstType: data.gstType ?? "intrastate",
+    placeOfSupply: data.placeOfSupply ?? "07",
+    reverseCharge: data.reverseCharge ?? false,
+    shipToName: data.shipToName,
+    shipToAddress: data.shipToAddress,
+    transporter: data.transporter,
+    ewayBill: data.ewayBill,
     createdAt: now,
     updatedAt: now,
   };

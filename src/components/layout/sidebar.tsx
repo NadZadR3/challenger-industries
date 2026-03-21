@@ -107,12 +107,12 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:border-border bg-card">
+      <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:border-border bg-card no-print">
         <SidebarContent />
       </aside>
 
       {/* Mobile hamburger + sheet */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center border-b border-border bg-card px-4 md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center border-b border-border bg-card px-4 md:hidden no-print">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger render={<Button variant="ghost" size="icon" />}>
             <Menu className="h-5 w-5" />
