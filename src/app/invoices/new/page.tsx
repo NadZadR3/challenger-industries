@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { useClientStore } from "@/lib/store/client-store";
 import { useInvoiceStore } from "@/lib/store/invoice-store";
 import { useSettingsStore } from "@/lib/store/settings-store";
+import { useCatalogStore } from "@/lib/store/catalog-store";
 import {
   formatCurrency,
   todayISO,
@@ -46,7 +47,7 @@ import { addDays, format } from "date-fns";
 function emptyLineItem(): LineItem {
   return {
     id: nanoid(),
-    type: "service",
+    type: "product",
     description: "",
     quantity: 1,
     unitPrice: 0,
@@ -63,6 +64,7 @@ export default function NewInvoicePage() {
   const clients = useClientStore((s) => s.clients);
   const createInvoice = useInvoiceStore((s) => s.createInvoice);
   const profile = useSettingsStore((s) => s.profile);
+  const catalogItems = useCatalogStore((s) => s.items);
 
   const today = todayISO();
   const defaultDue = format(addDays(new Date(), 30), "yyyy-MM-dd");
@@ -134,6 +136,24 @@ export default function NewInvoicePage() {
       }
       if (field === "taxRate") item.taxRate = Number(value);
       items[index] = item;
+      return items;
+    });
+  }
+
+  function applyFromCatalog(index: number, catalogId: string) {
+    const item = catalogItems.find((c) => c.id === catalogId);
+    if (!item) return;
+    setLineItems((prev) => {
+      const items = [...prev];
+      const li = { ...items[index] };
+      li.type = item.type;
+      li.description = item.description;
+      li.hsnSacCode = item.hsnSacCode;
+      li.unit = item.unit;
+      li.unitPrice = item.unitPrice;
+      li.taxRate = item.taxRate;
+      li.amount = calculateLineItemAmount(li.quantity, item.unitPrice);
+      items[index] = li;
       return items;
     });
   }
@@ -213,7 +233,6 @@ export default function NewInvoicePage() {
                       {clients.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.name}
-                          {c.company ? ` (${c.company})` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -494,6 +513,42 @@ export default function NewInvoicePage() {
                   <div key={item.id} className="space-y-3 rounded-lg border p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex-1 space-y-3">
+                        {/* Catalog selector */}
+                        {catalogItems.length > 0 && (
+                          <div className="space-y-2">
+                            <Label>Select from Catalog</Label>
+                            <Select
+                              value=""
+                              onValueChange={(v) => v && applyFromCatalog(index, v)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choose a saved product or service…" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {catalogItems.filter((c) => c.type === "product").length > 0 && (
+                                  <>
+                                    <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Products</p>
+                                    {catalogItems.filter((c) => c.type === "product").map((c) => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        {c.description} — {formatCurrency(c.unitPrice)}
+                                      </SelectItem>
+                                    ))}
+                                  </>
+                                )}
+                                {catalogItems.filter((c) => c.type === "service").length > 0 && (
+                                  <>
+                                    <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Services</p>
+                                    {catalogItems.filter((c) => c.type === "service").map((c) => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        {c.description} — {formatCurrency(c.unitPrice)}
+                                      </SelectItem>
+                                    ))}
+                                  </>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                         {/* Row 1: Description + Type */}
                         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
                           <div className="space-y-2">
@@ -518,8 +573,8 @@ export default function NewInvoicePage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="service">Service</SelectItem>
                                 <SelectItem value="product">Product</SelectItem>
+                                <SelectItem value="service">Service</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>

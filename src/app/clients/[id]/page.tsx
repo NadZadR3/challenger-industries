@@ -60,7 +60,7 @@ export default function ClientDetailPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title={client.name} description={client.company || undefined}>
+      <PageHeader title={client.name} description={client.taxId ? `GSTIN: ${client.taxId}` : undefined}>
         <Link href={`/clients/${id}/edit`} className={buttonVariants({ variant: "outline" })}>
           <Pencil className="mr-2 h-4 w-4" />
           Edit
@@ -101,14 +101,14 @@ export default function ClientDetailPage({
                   </div>
                 </div>
               )}
-              {client.company && (
+              {client.taxId && (
                 <div className="flex items-center gap-3 rounded-lg border p-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/50">
                     <Building className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Company</p>
-                    <p className="text-sm">{client.company}</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">GST / Tax ID</p>
+                    <p className="text-sm font-mono">{client.taxId}</p>
                   </div>
                 </div>
               )}

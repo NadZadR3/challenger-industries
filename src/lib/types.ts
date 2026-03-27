@@ -19,14 +19,26 @@ export interface Address {
 
 export interface Client {
   id: string;
-  name: string;
+  name: string;       // company / business name (primary identifier)
   email: string;
   phone: string;
-  company: string;
+  taxId: string;       // customer's GSTIN / Tax ID
   address: Address;
   notes: string;
   createdAt: string; // ISO 8601
   updatedAt: string;
+}
+
+// ── Product / Service Catalog ───────────────────────────────────────
+
+export interface CatalogItem {
+  id: string;
+  type: LineItemType;
+  description: string;
+  hsnSacCode: string;
+  unit: string;
+  unitPrice: number;  // cents
+  taxRate: number;     // GST rate %
 }
 
 export interface LineItem {

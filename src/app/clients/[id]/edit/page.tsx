@@ -27,7 +27,7 @@ export default function EditClientPage({
     name: "",
     email: "",
     phone: "",
-    company: "",
+    taxId: "",
     street: "",
     city: "",
     state: "",
@@ -42,7 +42,7 @@ export default function EditClientPage({
         name: client.name,
         email: client.email,
         phone: client.phone,
-        company: client.company,
+        taxId: client.taxId || "",
         street: client.address.street,
         city: client.address.city,
         state: client.address.state,
@@ -79,14 +79,14 @@ export default function EditClientPage({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error("Client name is required");
+      toast.error("Company name is required");
       return;
     }
     updateClient(id, {
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),
-      company: form.company.trim(),
+      taxId: form.taxId.trim(),
       address: {
         street: form.street.trim(),
         city: form.city.trim(),
@@ -111,12 +111,12 @@ export default function EditClientPage({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name">Company Name *</Label>
                 <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
-                <Input id="company" value={form.company} onChange={(e) => update("company", e.target.value)} />
+                <Label htmlFor="taxId">GST / Tax ID</Label>
+                <Input id="taxId" value={form.taxId} onChange={(e) => update("taxId", e.target.value)} className="font-mono" maxLength={15} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">

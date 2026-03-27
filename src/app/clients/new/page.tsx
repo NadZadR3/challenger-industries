@@ -21,12 +21,12 @@ export default function NewClientPage() {
     name: "",
     email: "",
     phone: "",
-    company: "",
+    taxId: "",
     street: "",
     city: "",
     state: "",
     zip: "",
-    country: "US",
+    country: "India",
     notes: "",
   });
 
@@ -45,14 +45,14 @@ export default function NewClientPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error("Client name is required");
+      toast.error("Company name is required");
       return;
     }
     addClient({
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),
-      company: form.company.trim(),
+      taxId: form.taxId.trim(),
       address: {
         street: form.street.trim(),
         city: form.city.trim(),
@@ -77,21 +77,23 @@ export default function NewClientPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name">Company Name *</Label>
                 <Input
                   id="name"
                   value={form.name}
                   onChange={(e) => update("name", e.target.value)}
-                  placeholder="John Doe"
+                  placeholder="Acme Industries Pvt. Ltd."
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
+                <Label htmlFor="taxId">GST / Tax ID</Label>
                 <Input
-                  id="company"
-                  value={form.company}
-                  onChange={(e) => update("company", e.target.value)}
-                  placeholder="Acme Corp"
+                  id="taxId"
+                  value={form.taxId}
+                  onChange={(e) => update("taxId", e.target.value)}
+                  placeholder="e.g. 07AABCU9603R1ZM"
+                  className="font-mono"
+                  maxLength={15}
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -102,7 +104,7 @@ export default function NewClientPage() {
                     type="email"
                     value={form.email}
                     onChange={(e) => update("email", e.target.value)}
-                    placeholder="john@acme.com"
+                    placeholder="info@acme.com"
                   />
                 </div>
                 <div className="space-y-2">
@@ -111,7 +113,7 @@ export default function NewClientPage() {
                     id="phone"
                     value={form.phone}
                     onChange={(e) => update("phone", e.target.value)}
-                    placeholder="(555) 123-4567"
+                    placeholder="+91 98765 43210"
                   />
                 </div>
               </div>

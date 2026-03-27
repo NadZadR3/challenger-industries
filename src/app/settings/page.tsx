@@ -15,7 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSettingsStore } from "@/lib/store/settings-store";
-import type { RegistrationNumber } from "@/lib/types";
+import { useCatalogStore } from "@/lib/store/catalog-store";
+import type { RegistrationNumber, LineItemType } from "@/lib/types";
+import { GST_RATES, UQC_CODES } from "@/lib/gst";
+import { formatCurrency, dollarsToCents } from "@/lib/format";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -33,12 +36,17 @@ import {
   ImageIcon,
   Landmark,
   PenLine,
+  Package,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const hydrated = useHydrated();
   const profile = useSettingsStore((s) => s.profile);
   const updateProfile = useSettingsStore((s) => s.updateProfile);
+  const catalogItems = useCatalogStore((s) => s.items);
+  const addCatalogItem = useCatalogStore((s) => s.addItem);
+  const updateCatalogItem = useCatalogStore((s) => s.updateItem);
+  const deleteCatalogItem = useCatalogStore((s) => s.deleteItem);
 
   const [form, setForm] = useState(profile);
 
@@ -495,6 +503,193 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground pt-1">
                   Common labels: FSSAI, GSTIN, FDA Lic., CIN, MSME/Udyam, IEC, Drug Lic., PAN
                 </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ── Products & Services Catalog ── */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+                  <Package className="h-4 w-4 text-violet-500" />
+                </div>
+                <div>
+                  <CardTitle>Products & Services</CardTitle>
+                  <CardDescription>
+                    Save your products and services here. They appear as dropdown options when creating invoices.
+                  </CardDescription>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  addCatalogItem({
+                    type: "product",
+                    description: "",
+                    hsnSacCode: "",
+                    unit: "NOS",
+                    unitPrice: 0,
+                    taxRate: 18,
+                  })
+                }
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Add
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {catalogItems.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-8 text-center">
+                <Package className="mx-auto h-8 w-8 text-muted-foreground/40 mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  No products or services saved yet.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Add items here so you can quickly select them when creating invoices.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() =>
+                    addCatalogItem({
+                      type: "product",
+                      description: "",
+                      hsnSacCode: "",
+                      unit: "NOS",
+                      unitPrice: 0,
+                      taxRate: 18,
+                    })
+                  }
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add Product or Service
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {catalogItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3"
+                  >
+                    <div className="flex-1 space-y-3">
+                      <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Type</Label>
+                          <Select
+                            value={item.type}
+                            onValueChange={(v) =>
+                              v && updateCatalogItem(item.id, { type: v as LineItemType })
+                            }
+                          >
+                            <SelectTrigger className="w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="product">Product</SelectItem>
+                              <SelectItem value="service">Service</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Description</Label>
+                          <Input
+                            value={item.description}
+                            onChange={(e) =>
+                              updateCatalogItem(item.id, { description: e.target.value })
+                            }
+                            placeholder="Product or service name"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-4">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">
+                            {item.type === "product" ? "HSN Code" : "SAC Code"}
+                          </Label>
+                          <Input
+                            value={item.hsnSacCode}
+                            onChange={(e) =>
+                              updateCatalogItem(item.id, { hsnSacCode: e.target.value })
+                            }
+                            placeholder={item.type === "product" ? "e.g. 0901" : "e.g. 998314"}
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Unit Price (₹)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.unitPrice / 100 || ""}
+                            onChange={(e) =>
+                              updateCatalogItem(item.id, {
+                                unitPrice: dollarsToCents(Number(e.target.value) || 0),
+                              })
+                            }
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Unit</Label>
+                          <Select
+                            value={item.unit}
+                            onValueChange={(v) =>
+                              v && updateCatalogItem(item.id, { unit: v })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {UQC_CODES.map((u) => (
+                                <SelectItem key={u} value={u}>{u}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">GST Rate</Label>
+                          <Select
+                            value={String(item.taxRate)}
+                            onValueChange={(v) =>
+                              v && updateCatalogItem(item.id, { taxRate: Number(v) })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {GST_RATES.map((r) => (
+                                <SelectItem key={r} value={String(r)}>
+                                  {r}%
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="mt-5 shrink-0"
+                      onClick={() => deleteCatalogItem(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

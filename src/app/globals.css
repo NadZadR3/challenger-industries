@@ -162,12 +162,13 @@
     overflow: visible !important;
   }
 
-  /* ── HIDE: sidebar, mobile bar, nav, action buttons, status badges ── */
+  /* ── HIDE: sidebar, mobile bar, nav, action buttons, toasts, status badges ── */
   aside,
   nav,
   header,
   .no-print,
-  [data-print-hide] {
+  [data-print-hide],
+  [data-sonner-toaster] {
     display: none !important;
     width: 0 !important;
     height: 0 !important;

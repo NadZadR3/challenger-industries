@@ -124,39 +124,40 @@ export default function InvoiceDetailPage({
 
     return (
       <>
-        {/* Copy label — top right (only shown in print) */}
-        {copyLabel && (
-          <div className="hidden print-copy-label text-right -mb-1">
-            <span className="text-[9px] font-bold italic">{copyLabel}</span>
-          </div>
-        )}
-
-        {/* Header — logo row */}
-        {profile.logo && (
-          <div className="mb-4 flex items-center justify-between">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* Copy label + GSTN/IEC — top right */}
+        <div className="flex items-start justify-between mb-4">
+          {/* Logo — top left */}
+          {profile.logo && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.logo}
               alt={profile.name}
               className="h-12 w-auto max-w-[220px] object-contain"
             />
-            {/* GSTN + IEC — prominent, top right */}
-            <div className="text-right space-y-0.5">
-              {profile.taxId && (
-                <div className="inline-flex items-center gap-1.5 rounded border border-primary/20 bg-primary/5 px-2.5 py-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">GSTN:</span>
-                  <span className="font-mono text-xs font-semibold">{profile.taxId}</span>
-                </div>
-              )}
-              {iecReg && (
-                <div className="text-[10px] text-muted-foreground">
-                  <span className="font-semibold uppercase tracking-wider">IEC:</span>{" "}
-                  <span className="font-mono">{iecReg.value}</span>
-                </div>
-              )}
-            </div>
+          )}
+          {!profile.logo && <div />}
+
+          {/* Copy label + GSTN + IEC — stacked, right-aligned */}
+          <div className="text-right space-y-1">
+            {copyLabel && (
+              <div className="hidden print-copy-label">
+                <span className="text-[9px] font-bold italic">{copyLabel}</span>
+              </div>
+            )}
+            {profile.taxId && (
+              <div className="inline-flex items-center gap-1.5 rounded border border-primary/20 bg-primary/5 px-2.5 py-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">GSTN:</span>
+                <span className="font-mono text-xs font-semibold">{profile.taxId}</span>
+              </div>
+            )}
+            {iecReg && (
+              <div className="text-[10px] text-muted-foreground">
+                <span className="font-semibold uppercase tracking-wider">IEC:</span>{" "}
+                <span className="font-mono">{iecReg.value}</span>
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Company info + INVOICE No. row */}
         <div className="flex justify-between mb-6 gap-6">
@@ -184,20 +185,6 @@ export default function InvoiceDetailPage({
               <div className="mt-1 text-xs text-muted-foreground flex gap-3">
                 {profile.email && <span>{profile.email}</span>}
                 {profile.phone && <span>{profile.phone}</span>}
-              </div>
-            )}
-            {!profile.logo && profile.taxId && (
-              <div className="mt-2 space-y-0.5">
-                <div className="inline-flex items-center gap-1.5 rounded border border-primary/20 bg-primary/5 px-2 py-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">GSTN:</span>
-                  <span className="font-mono text-xs font-semibold">{profile.taxId}</span>
-                </div>
-                {iecReg && (
-                  <div className="text-[10px] text-muted-foreground">
-                    <span className="font-semibold uppercase tracking-wider">IEC:</span>{" "}
-                    <span className="font-mono">{iecReg.value}</span>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -279,8 +266,11 @@ export default function InvoiceDetailPage({
             {client ? (
               <div className="text-sm leading-relaxed">
                 <p className="font-semibold">{client.name}</p>
-                {client.company && (
-                  <p className="text-muted-foreground text-xs">{client.company}</p>
+                {client.taxId && (
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold">GSTIN:</span>{" "}
+                    <span className="font-mono">{client.taxId}</span>
+                  </p>
                 )}
                 {client.address.street && <p className="text-xs">{client.address.street}</p>}
                 {client.address.city && (

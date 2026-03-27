@@ -30,7 +30,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="h-full bg-background text-foreground">
+      <body className="h-full bg-background text-foreground" suppressHydrationWarning>
         <TooltipProvider>
           <div className="flex h-full">
             <Sidebar />
