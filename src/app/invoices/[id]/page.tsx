@@ -36,11 +36,24 @@ import {
   FileText,
   Landmark,
   Printer,
+  MessageCircle,
+  Download,
+  Mail,
 } from "lucide-react";
 import { useHydrated } from "@/lib/use-hydrated";
 import type { InvoiceStatus } from "@/lib/types";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { shareToClient, shareToAccountant } from "@/lib/whatsapp";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PaymentDialog } from "@/components/payment-dialog";
+import { pdf } from "@react-pdf/renderer";
+import { InvoicePDF } from "@/components/invoice-pdf";
 
 const statusColors: Record<InvoiceStatus, string> = {
   draft: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
@@ -67,11 +80,41 @@ export default function InvoiceDetailPage({
   const payments = allPayments.filter((p) => p.invoiceId === id);
   const profile = useSettingsStore((s) => s.profile);
 
-  // Print copies: by default Original + Duplicate
-  const [printCopies, setPrintCopies] = useState<string[]>([
-    "Original Copy for Buyer",
-    "Duplicate Copy for Transporter",
-  ]);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!invoice || !profile) return;
+    setPdfLoading(true);
+    try {
+      const blob = await pdf(
+        <InvoicePDF invoice={invoice} client={client} profile={profile} />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${invoice.invoiceNumber.replace(/\//g, "-")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF downloaded");
+    } catch {
+      toast.error("Failed to generate PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  }, [invoice, client, profile]);
+
+  const handleEmailInvoice = useCallback(() => {
+    if (!invoice || !client) return;
+    const subject = encodeURIComponent(
+      `Invoice ${invoice.invoiceNumber} from ${profile.name}`
+    );
+    const body = encodeURIComponent(
+      `Dear ${client.name},\n\nPlease find attached Invoice ${invoice.invoiceNumber} dated ${formatDateIndia(invoice.issueDate)} for ${formatCurrency(invoice.total)}.\n\nDue Date: ${formatDateIndia(invoice.dueDate)}\n\nPlease make payment at your earliest convenience.\n\nRegards,\n${profile.name}`
+    );
+    const mailto = `mailto:${client.email}?subject=${subject}&body=${body}`;
+    window.open(mailto, "_blank");
+    toast.success("Opening email client");
+  }, [invoice, client, profile]);
 
   // Extract IEC from registrations (to show below GSTN)
   const iecReg = profile.registrations.find(
@@ -592,6 +635,52 @@ export default function InvoiceDetailPage({
           <Printer className="mr-2 h-3 w-3" />
           Print
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="no-print"
+          onClick={handleDownloadPdf}
+          disabled={pdfLoading}
+        >
+          <Download className="mr-2 h-3 w-3" />
+          {pdfLoading ? "Generating…" : "PDF"}
+        </Button>
+        {client?.email && (
+          <Button size="sm" variant="outline" className="no-print" onClick={handleEmailInvoice}>
+            <Mail className="mr-2 h-3 w-3" />
+            Email
+          </Button>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger className={buttonVariants({ variant: "outline", size: "sm" }) + " no-print cursor-pointer"}>
+              <MessageCircle className="mr-2 h-3 w-3" />
+              WhatsApp
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                shareToClient(invoice, client, profile);
+                toast.success("Opening WhatsApp for client");
+              }}
+            >
+              Send to Client
+              {client?.phone && (
+                <span className="ml-2 text-xs text-muted-foreground">{client.phone}</span>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                shareToAccountant(invoice, client, profile);
+                toast.success("Opening WhatsApp for accountant");
+              }}
+            >
+              Send to Accountant
+              {profile.accountantName && (
+                <span className="ml-2 text-xs text-muted-foreground">{profile.accountantName}</span>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Link href={`/invoices/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" })}>
           <Pencil className="mr-2 h-3 w-3" />
           Edit
@@ -639,8 +728,11 @@ export default function InvoiceDetailPage({
         {/* Sidebar info */}
         <div className="space-y-6" data-print-hide>
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Payment Summary</CardTitle>
+              {invoice.status !== "cancelled" && invoice.status !== "paid" && (
+                <PaymentDialog invoiceId={id} balanceDue={invoice.balanceDue} />
+              )}
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">

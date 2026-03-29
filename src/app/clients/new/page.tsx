@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useClientStore } from "@/lib/store/client-store";
 import { useHydrated } from "@/lib/use-hydrated";
+import { validateGSTIN } from "@/lib/gstin-validate";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -29,6 +30,7 @@ export default function NewClientPage() {
     country: "India",
     notes: "",
   });
+  const [gstinError, setGstinError] = useState("");
 
   if (!hydrated) {
     return (
@@ -42,11 +44,28 @@ export default function NewClientPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function handleGstinChange(value: string) {
+    update("taxId", value.toUpperCase());
+    if (value.trim()) {
+      const result = validateGSTIN(value.trim());
+      setGstinError(result.valid ? "" : result.error || "Invalid GSTIN");
+    } else {
+      setGstinError("");
+    }
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
       toast.error("Company name is required");
       return;
+    }
+    if (form.taxId.trim()) {
+      const result = validateGSTIN(form.taxId.trim());
+      if (!result.valid) {
+        toast.error(result.error || "Invalid GSTIN");
+        return;
+      }
     }
     addClient({
       name: form.name.trim(),
@@ -90,11 +109,14 @@ export default function NewClientPage() {
                 <Input
                   id="taxId"
                   value={form.taxId}
-                  onChange={(e) => update("taxId", e.target.value)}
+                  onChange={(e) => handleGstinChange(e.target.value)}
                   placeholder="e.g. 07AABCU9603R1ZM"
-                  className="font-mono"
+                  className={`font-mono ${gstinError ? "border-destructive" : ""}`}
                   maxLength={15}
                 />
+                {gstinError && (
+                  <p className="text-xs text-destructive">{gstinError}</p>
+                )}
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">

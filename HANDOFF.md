@@ -64,34 +64,44 @@ src/
 │   ├── layout.tsx          # Root layout: Geist fonts, Sidebar, TooltipProvider, Toaster
 │   ├── page.tsx            # Redirects to /dashboard
 │   ├── globals.css         # Tailwind v4 theme + @media print styles (2-page A4)
-│   ├── dashboard/page.tsx  # 4 stat cards, recent invoices, quick summary
+│   ├── dashboard/page.tsx  # 4 stat cards, recharts (revenue bar + status pie), recent invoices
 │   ├── invoices/
 │   │   ├── page.tsx        # List with status filter tabs, dropdown actions
 │   │   ├── new/page.tsx    # Invoice builder: client, GST, transport, e-way bill, line items
 │   │   └── [id]/
-│   │       ├── page.tsx    # Invoice detail: print-ready, 2-page copies, bank details, signatory
+│   │       ├── page.tsx    # Invoice detail: print/PDF/email, payment dialog, WhatsApp
 │   │       └── edit/page.tsx
 │   ├── clients/
 │   │   ├── page.tsx        # Client list with total billed
-│   │   ├── new/page.tsx
+│   │   ├── new/page.tsx    # New client with GSTIN validation
 │   │   └── [id]/
 │   │       ├── page.tsx    # Client detail with invoice history
-│   │       └── edit/page.tsx
+│   │       └── edit/page.tsx  # Edit client with GSTIN validation
 │   ├── settings/page.tsx   # Business profile, addresses, logo, bank, registrations, stamp/signature
-│   ├── recurring/page.tsx  # Placeholder (Coming Soon)
-│   └── reports/page.tsx    # Placeholder (Coming Soon)
+│   ├── recurring/page.tsx  # Recurring templates: CRUD, generate on demand, pause/resume
+│   └── reports/page.tsx    # 4 tab reports: Revenue, Aging, Tax (GST), Client
 ├── components/
 │   ├── layout/
-│   │   ├── sidebar.tsx     # Desktop sidebar + mobile Sheet drawer
+│   │   ├── sidebar.tsx     # Desktop sidebar + mobile Sheet drawer + dark mode toggle
 │   │   └── page-header.tsx # Reusable header with title, description, action slot
+│   ├── invoice-pdf.tsx     # @react-pdf/renderer 2-page PDF (Original + Duplicate)
+│   ├── payment-dialog.tsx  # Payment recording dialog (amount, method, date, ref)
 │   └── ui/                 # shadcn/ui components (base-ui backed)
 └── lib/
-    ├── types.ts            # All types: Invoice, Client, LineItem, TransporterDetails, EWayBillDetails, BankDetails, BusinessProfile
+    ├── types.ts            # All types: Invoice, Client, LineItem, TransporterDetails, etc.
     ├── format.ts           # Currency, date (Indian DD/MM/YYYY), invoice number (FY format), totals
     ├── gst.ts              # Indian GST: states, rates, CGST/SGST/IGST split, amount in words
+    ├── gstin-validate.ts   # GSTIN validation: format regex + Luhn mod 36 check digit
     ├── use-hydrated.ts     # Client-mount guard for Zustand persist stores
     ├── utils.ts            # cn() utility
-    └── store/              # Zustand stores (see table above)
+    └── store/
+        ├── settings-store.ts   # Business profile, bank details, stamp/signature
+        ├── client-store.ts     # Client CRUD
+        ├── invoice-store.ts    # Invoice CRUD, FY numbering, GST
+        ├── payment-store.ts    # Payment recording
+        ├── catalog-store.ts    # Products & services catalog
+        ├── recurring-store.ts  # Recurring invoice templates
+        └── theme-store.ts      # Dark/light mode persistence
 ```
 
 ## Invoice Detail Page — Print Layout
@@ -165,28 +175,23 @@ The invoice detail page (`invoices/[id]/page.tsx`) renders a print-ready invoice
 - [x] Polished dark-mode UI throughout
 - [x] Hydration fix for all pages
 - [x] Sidebar with desktop + mobile responsive layout
+- [x] **Phase 3**: PDF generation with `@react-pdf/renderer` (2-page invoice download)
+- [x] **Phase 3**: Payment recording dialog on invoice detail page (amount, method, date, reference)
+- [x] **Phase 3**: Email invoice via mailto link (pre-filled subject + body)
+- [x] **Phase 4**: Recurring invoice templates (CRUD, generate on demand, pause/resume)
+- [x] **Phase 4**: Dashboard charts with `recharts` (revenue bar chart, status pie chart)
+- [x] **Phase 5**: Revenue report (monthly billed vs collected, date-filterable)
+- [x] **Phase 5**: Aging report (current/30/60/90/90+ day buckets, overdue details)
+- [x] **Phase 5**: Tax report (GST summary by rate — CGST/SGST/IGST breakdowns)
+- [x] **Phase 5**: Client revenue report (top clients chart, breakdown table)
+- [x] **Phase 5**: Dark mode toggle in sidebar (persisted via Zustand)
+- [x] **Phase 5**: GSTIN validation (format regex + Luhn mod 36 check digit + state code check)
 
 ## Remaining Work
-
-### Phase 3 — PDF & Email
-- [ ] PDF generation with `@react-pdf/renderer` (invoice download as PDF)
-- [ ] Payment recording dialog on invoice detail page
-- [ ] Email invoice (generate mailto link or integrate Resend)
-
-### Phase 4 — Recurring & Charts
-- [ ] Recurring invoice templates (create, schedule, auto-generate)
-- [ ] Dashboard charts with `recharts` (revenue over time, status breakdown)
-
-### Phase 5 — Reports & Polish
-- [ ] Revenue report (filterable by date range)
-- [ ] Aging report (overdue analysis)
-- [ ] Tax report (GST collected summary — CGST/SGST/IGST breakdowns)
-- [ ] Client revenue report
-- [ ] Dark mode toggle (currently always dark)
+- [ ] E-invoice integration (NIC portal API)
+- [ ] Recurring auto-generation (cron/scheduler — currently manual "Generate Now")
 - [ ] Responsive polish pass
 - [ ] Empty/loading/error states audit
-- [ ] GSTIN validation (check digit algorithm)
-- [ ] E-invoice integration (NIC portal API)
 
 ## Running the App
 ```bash

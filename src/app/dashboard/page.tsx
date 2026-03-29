@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { useInvoiceStore } from "@/lib/store/invoice-store";
 import { useClientStore } from "@/lib/store/client-store";
 import { usePaymentStore } from "@/lib/store/payment-store";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, centsToDollars } from "@/lib/format";
 import type { InvoiceStatus } from "@/lib/types";
 import { useHydrated } from "@/lib/use-hydrated";
 import {
@@ -20,6 +20,20 @@ import {
   Plus,
   ArrowRight,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+import { parseISO, format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 
 const statusColors: Record<InvoiceStatus, string> = {
   draft: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
@@ -27,6 +41,15 @@ const statusColors: Record<InvoiceStatus, string> = {
   paid: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   overdue: "bg-red-500/10 text-red-400 border-red-500/20",
   cancelled: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20",
+};
+
+const PIE_COLORS = ["#71717a", "#3b82f6", "#10b981", "#ef4444", "#6b7280"];
+const STATUS_LABELS: Record<InvoiceStatus, string> = {
+  draft: "Draft",
+  sent: "Sent",
+  paid: "Paid",
+  overdue: "Overdue",
+  cancelled: "Cancelled",
 };
 
 export default function DashboardPage() {
@@ -55,6 +78,33 @@ export default function DashboardPage() {
   const overdueCount = invoices.filter((i) => i.status === "overdue").length;
   const draftCount = invoices.filter((i) => i.status === "draft").length;
 
+  // Revenue by month (last 6 months)
+  const now = new Date();
+  const revenueByMonth = Array.from({ length: 6 }, (_, i) => {
+    const monthDate = subMonths(now, 5 - i);
+    const start = startOfMonth(monthDate);
+    const end = endOfMonth(monthDate);
+    const label = format(monthDate, "MMM yy");
+    const revenue = invoices
+      .filter(
+        (inv) =>
+          inv.status === "paid" &&
+          inv.issueDate &&
+          isWithinInterval(parseISO(inv.issueDate), { start, end })
+      )
+      .reduce((sum, inv) => sum + inv.total, 0);
+    return { month: label, revenue: centsToDollars(revenue) };
+  });
+
+  // Invoice status breakdown for pie chart
+  const statusBreakdown = (["draft", "sent", "paid", "overdue", "cancelled"] as InvoiceStatus[])
+    .map((status, idx) => ({
+      name: STATUS_LABELS[status],
+      value: invoices.filter((i) => i.status === status).length,
+      color: PIE_COLORS[idx],
+    }))
+    .filter((s) => s.value > 0);
+
   const stats = [
     {
       title: "Total Revenue",
@@ -74,7 +124,7 @@ export default function DashboardPage() {
     },
     {
       title: "Overdue",
-      value: overdueCount > 0 ? formatCurrency(overdueAmount) : "$0.00",
+      value: overdueCount > 0 ? formatCurrency(overdueAmount) : formatCurrency(0),
       icon: AlertTriangle,
       description: overdueCount > 0 ? `${overdueCount} need${overdueCount === 1 ? "s" : ""} attention` : "All clear",
       iconBg: overdueCount > 0 ? "bg-red-500/10" : "bg-zinc-500/10",
@@ -120,6 +170,93 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Charts Row */}
+      {invoices.length > 0 && (
+        <div className="grid gap-6 lg:grid-cols-5">
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle>Revenue (Last 6 Months)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={revenueByMonth}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                      axisLine={{ stroke: "#3f3f46" }}
+                    />
+                    <YAxis
+                      tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                      axisLine={{ stroke: "#3f3f46" }}
+                      tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#18181b",
+                        border: "1px solid #3f3f46",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                      formatter={(value) => [`₹${Number(value).toLocaleString("en-IN")}`, "Revenue"]}
+                    />
+                    <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Invoice Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                {statusBreakdown.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statusBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {statusBreakdown.map((entry, idx) => (
+                          <Cell key={idx} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#18181b",
+                          border: "1px solid #3f3f46",
+                          borderRadius: 8,
+                          fontSize: 12,
+                        }}
+                      />
+                      <Legend
+                        wrapperStyle={{ fontSize: 11 }}
+                        formatter={(value) => (
+                          <span style={{ color: "#a1a1aa" }}>{value}</span>
+                        )}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                    No invoices to display
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent Invoices */}
@@ -233,7 +370,7 @@ export default function DashboardPage() {
                       ? formatCurrency(
                           Math.round(invoices.reduce((s, i) => s + i.total, 0) / invoices.length)
                         )
-                      : "$0.00"}
+                      : formatCurrency(0)}
                   </span>
                 </div>
               </div>

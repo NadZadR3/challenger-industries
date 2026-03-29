@@ -171,6 +171,9 @@ export interface BusinessProfile {
   signatureImage?: string;   // base64 data URL of signature
   stampImage?: string;       // base64 data URL of company stamp/seal
   authorizedSignatory?: string; // name of the authorized signatory
+  // ── WhatsApp sharing ────────────────────────────────────────────────
+  accountantPhone?: string;     // WhatsApp number for accountant (with country code)
+  accountantName?: string;      // display name for the accountant
 }
 
 // ── Dashboard Types ──────────────────────────────────────────────────

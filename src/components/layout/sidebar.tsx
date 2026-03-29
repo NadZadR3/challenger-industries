@@ -12,12 +12,15 @@ import {
   Menu,
   X,
   Zap,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useThemeStore } from "@/lib/store/theme-store";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -58,6 +61,8 @@ function NavLinks({ onClick }: { onClick?: () => void }) {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const settingsActive = pathname.startsWith("/settings");
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
   return (
     <div className="flex h-full flex-col">
@@ -81,8 +86,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <Separator />
 
-      {/* Settings at bottom */}
-      <div className="p-3">
+      {/* Theme toggle + Settings at bottom */}
+      <div className="p-3 space-y-1">
+        <button
+          onClick={toggleTheme}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+        >
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4 shrink-0" />
+          ) : (
+            <Moon className="h-4 w-4 shrink-0" />
+          )}
+          {theme === "dark" ? "Light Mode" : "Dark Mode"}
+        </button>
         <Link
           href="/settings"
           onClick={onNavigate}

@@ -991,6 +991,28 @@ export default function SettingsPage() {
                   placeholder="USD"
                 />
               </div>
+              <Separator />
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">WhatsApp Sharing</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="accountantName">Accountant Name</Label>
+                  <Input
+                    id="accountantName"
+                    value={form.accountantName ?? ""}
+                    onChange={(e) => update("accountantName", e.target.value)}
+                    placeholder="Ramesh Ji"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountantPhone">Accountant WhatsApp</Label>
+                  <Input
+                    id="accountantPhone"
+                    value={form.accountantPhone ?? ""}
+                    onChange={(e) => update("accountantPhone", e.target.value)}
+                    placeholder="+91 98765 43210"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
