@@ -44,7 +44,7 @@ import { useHydrated } from "@/lib/use-hydrated";
 import type { InvoiceStatus } from "@/lib/types";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
-import { shareToClient, shareToAccountant } from "@/lib/whatsapp";
+import { shareToClient, shareToAccountant, shareWithPdf } from "@/lib/whatsapp";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,8 +52,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PaymentDialog } from "@/components/payment-dialog";
-import { pdf } from "@react-pdf/renderer";
-import { InvoicePDF } from "@/components/invoice-pdf";
+import { generateInvoicePdf } from "@/lib/generate-pdf";
 
 const statusColors: Record<InvoiceStatus, string> = {
   draft: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
@@ -82,13 +81,13 @@ export default function InvoiceDetailPage({
 
   const [pdfLoading, setPdfLoading] = useState(false);
 
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
+
   const handleDownloadPdf = useCallback(async () => {
     if (!invoice || !profile) return;
     setPdfLoading(true);
     try {
-      const blob = await pdf(
-        <InvoicePDF invoice={invoice} client={client} profile={profile} />
-      ).toBlob();
+      const blob = await generateInvoicePdf(invoice, client, profile);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -96,8 +95,11 @@ export default function InvoiceDetailPage({
       a.click();
       URL.revokeObjectURL(url);
       toast.success("PDF downloaded");
-    } catch {
-      toast.error("Failed to generate PDF");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      toast.error(
+        `Failed to generate PDF: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
     } finally {
       setPdfLoading(false);
     }
@@ -603,13 +605,13 @@ export default function InvoiceDetailPage({
             <div className="text-center min-w-[150px]">
               {profile.stampImage && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.stampImage} alt="Company stamp" className="mx-auto h-14 w-auto object-contain mb-0.5" />
+                <img src={profile.stampImage} alt="Company stamp" className="mx-auto h-28 w-auto object-contain mb-0.5" />
               )}
               {profile.signatureImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.signatureImage} alt="Signature" className="mx-auto h-10 w-auto object-contain" />
+                <img src={profile.signatureImage} alt="Signature" className="mx-auto h-20 w-auto object-contain" />
               ) : (
-                <div className="h-10 border-b border-dashed border-muted-foreground/30 mb-0.5" />
+                <div className="h-20 border-b border-dashed border-muted-foreground/30 mb-0.5" />
               )}
               <p className="text-[10px] font-semibold mt-0.5">
                 {profile.authorizedSignatory || profile.name}
@@ -652,15 +654,25 @@ export default function InvoiceDetailPage({
           </Button>
         )}
         <DropdownMenu>
-          <DropdownMenuTrigger className={buttonVariants({ variant: "outline", size: "sm" }) + " no-print cursor-pointer"}>
+          <DropdownMenuTrigger className={buttonVariants({ variant: "outline", size: "sm" }) + " no-print cursor-pointer"} disabled={whatsappLoading}>
               <MessageCircle className="mr-2 h-3 w-3" />
-              WhatsApp
+              {whatsappLoading ? "Preparing…" : "WhatsApp"}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              onClick={() => {
-                shareToClient(invoice, client, profile);
-                toast.success("Opening WhatsApp for client");
+              onClick={async () => {
+                setWhatsappLoading(true);
+                try {
+                  const blob = await generateInvoicePdf(invoice, client, profile);
+                  await shareWithPdf(invoice, client, profile, blob, "client");
+                  toast.success("Invoice shared via WhatsApp");
+                } catch (err) {
+                  console.error("WhatsApp PDF share failed:", err);
+                  shareToClient(invoice, client, profile);
+                  toast.info("PDF sharing not supported — sent text summary instead");
+                } finally {
+                  setWhatsappLoading(false);
+                }
               }}
             >
               Send to Client
@@ -669,9 +681,19 @@ export default function InvoiceDetailPage({
               )}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => {
-                shareToAccountant(invoice, client, profile);
-                toast.success("Opening WhatsApp for accountant");
+              onClick={async () => {
+                setWhatsappLoading(true);
+                try {
+                  const blob = await generateInvoicePdf(invoice, client, profile);
+                  await shareWithPdf(invoice, client, profile, blob, "accountant");
+                  toast.success("Invoice shared via WhatsApp");
+                } catch (err) {
+                  console.error("WhatsApp PDF share failed:", err);
+                  shareToAccountant(invoice, client, profile);
+                  toast.info("PDF sharing not supported — sent text summary instead");
+                } finally {
+                  setWhatsappLoading(false);
+                }
               }}
             >
               Send to Accountant

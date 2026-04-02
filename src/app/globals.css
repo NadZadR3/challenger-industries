@@ -247,10 +247,10 @@
     width: auto !important;
   }
   [data-print-invoice] img[alt="Company stamp"] {
-    max-height: 64px !important;
+    max-height: 128px !important;
   }
   [data-print-invoice] img[alt="Signature"] {
-    max-height: 40px !important;
+    max-height: 80px !important;
   }
 
   /* ── Table: auto layout, smaller text, wrap properly ── */

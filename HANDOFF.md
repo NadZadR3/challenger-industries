@@ -147,7 +147,7 @@ The invoice detail page (`invoices/[id]/page.tsx`) renders a print-ready invoice
 - Forces light theme, hides sidebar/nav/status badges
 - `.print-copy-label` shown only in print (copy label at top right)
 - `.print-duplicate-copy` renders second page with `page-break-before: always`
-- Logo max-height capped at 40px, stamp at 64px, signature at 40px
+- Logo max-height capped at 40px, stamp at 128px, signature at 80px
 
 ## Completed
 - [x] Zustand stores with localStorage persistence
@@ -186,8 +186,14 @@ The invoice detail page (`invoices/[id]/page.tsx`) renders a print-ready invoice
 - [x] **Phase 5**: Client revenue report (top clients chart, breakdown table)
 - [x] **Phase 5**: Dark mode toggle in sidebar (persisted via Zustand)
 - [x] **Phase 5**: GSTIN validation (format regex + Luhn mod 36 check digit + state code check)
+- [x] **Phase 6**: Fix PDF generation — dynamic imports to avoid SSR failures, shared `generate-pdf.tsx` helper
+- [x] **Phase 6**: WhatsApp PDF sharing — Web Share API on mobile, download+text fallback on desktop
+- [x] **Phase 6**: Signature & stamp size doubled across screen, PDF, and print CSS
+- [x] **Phase 6**: Deployed to Vercel — https://challenger-industries.vercel.app
+- [x] **Phase 6**: GitHub repo — https://github.com/Maxray77/Challenger-Industries.git
 
 ## Remaining Work
+- [ ] Multi-user database (Supabase recommended — 2 users sharing data, auth, real-time sync)
 - [ ] E-invoice integration (NIC portal API)
 - [ ] Recurring auto-generation (cron/scheduler — currently manual "Generate Now")
 - [ ] Responsive polish pass
@@ -199,6 +205,14 @@ cd C:\Users\maxra\Documents\Code\challenger-industries
 npm run dev        # http://localhost:3001
 npm run build      # Production build
 ```
+
+## Key Files (Phase 6)
+- `src/lib/generate-pdf.tsx` — shared PDF generation helper (dynamic imports)
+- `src/lib/whatsapp.ts` — added `shareWithPdf()` for PDF sharing via Web Share API
+- `src/app/invoices/[id]/page.tsx` — updated PDF button, WhatsApp handlers, signature sizes
+- `src/components/invoice-pdf.tsx` — removed `"use client"`, doubled stamp/signature sizes
+- `src/app/globals.css` — doubled print CSS signature/stamp max-heights
+- `next.config.ts` — added `serverExternalPackages` for @react-pdf/renderer
 
 ## Git History
 ```

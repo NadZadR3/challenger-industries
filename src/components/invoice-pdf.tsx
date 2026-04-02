@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Document,
   Page,
@@ -326,13 +324,13 @@ const styles = StyleSheet.create({
     minWidth: 130,
   },
   stampImage: {
-    maxHeight: 50,
-    maxWidth: 80,
+    maxHeight: 100,
+    maxWidth: 160,
     marginBottom: 2,
   },
   signatureImage: {
-    maxHeight: 35,
-    maxWidth: 100,
+    maxHeight: 70,
+    maxWidth: 200,
   },
   signatoryName: {
     fontFamily: "Helvetica-Bold",

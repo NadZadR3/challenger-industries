@@ -163,3 +163,49 @@ export function shareToAccountant(
     : `https://wa.me/?text=${encoded}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
+
+/**
+ * Share an invoice as a PDF via the Web Share API (targets WhatsApp on mobile).
+ * Falls back to downloading the PDF + opening WhatsApp with a text summary.
+ */
+export async function shareWithPdf(
+  invoice: Invoice,
+  client: Client | undefined,
+  profile: BusinessProfile,
+  pdfBlob: Blob,
+  target: "client" | "accountant",
+): Promise<void> {
+  const fileName = `${invoice.invoiceNumber.replace(/\//g, "-")}.pdf`;
+  const pdfFile = new File([pdfBlob], fileName, { type: "application/pdf" });
+
+  // Try Web Share API with file support (works on mobile — lets user pick WhatsApp)
+  if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [pdfFile] })) {
+    const message =
+      target === "client"
+        ? buildInvoiceMessage(invoice, client, profile)
+        : buildAccountantMessage(invoice, client, profile);
+    await navigator.share({
+      title: `Invoice ${invoice.invoiceNumber}`,
+      text: message,
+      files: [pdfFile],
+    });
+    return;
+  }
+
+  // Fallback (desktop): download PDF, then open WhatsApp with text summary
+  const url = URL.createObjectURL(pdfBlob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Open WhatsApp with text message after a brief delay
+  setTimeout(() => {
+    if (target === "client") {
+      shareToClient(invoice, client, profile);
+    } else {
+      shareToAccountant(invoice, client, profile);
+    }
+  }, 500);
+}
