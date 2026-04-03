@@ -199,7 +199,21 @@ The invoice detail page (`invoices/[id]/page.tsx`) renders a print-ready invoice
 - [x] **Phase 7**: DSC certificate selection from USB token in Settings
 - [x] **Phase 7**: "Sign with DSC" button on invoice detail page, stores `DscSignatureInfo` on invoice
 - [x] **Phase 7**: DSC signature display in web view and PDF (cert holder, CA, date, hash)
-- [x] **Phase 7**: Deployed to Vercel production
+- [x] **Phase 7**: Deployed to Vercel production (via Deploy Hook — see Deployment Notes below)
+
+## Deployment Notes
+- **Vercel project**: `challenger-industries` on `maxray77s-projects` team (Hobby plan)
+- **Production URL**: https://challenger-industries.vercel.app
+- **GitHub repo**: https://github.com/Maxray77/Challenger-Industries.git
+- **Git-triggered deploys are currently blocked** by Vercel's "Commit Author Required" check — the git email (`nshehzad@raptorrescueusa.org`) is not verified on the Vercel team.
+  - **Fix option 1**: Add the email as a verified email on your GitHub account (GitHub → Settings → Emails), then reconnect GitHub in Vercel Dashboard → Account Settings → Authentication.
+  - **Fix option 2**: Use a **Deploy Hook** (already set up in project Settings → Git → Deploy Hooks). Trigger with:
+    ```powershell
+    Invoke-WebRequest -Uri "<deploy-hook-url>" -Method POST
+    ```
+    or from real curl: `curl.exe -X POST "<deploy-hook-url>"`
+- **Vercel CLI** is installed globally (`npm i -g vercel`), project is linked at the main repo root.
+- **Vercel Non-profit**: No dedicated plan. Contact `sponsorships@vercel.com` for case-by-case nonprofit support. Open Source Program accepts quarterly cohorts for free Pro-tier (12 months).
 
 ## Remaining Work
 - [ ] Multi-user database (Supabase recommended — 2 users sharing data, auth, real-time sync)
