@@ -71,6 +71,17 @@ export interface EWayBillDetails {
   validUntil: string;      // ISO date — depends on distance + vehicle type
 }
 
+/** Info captured after a DSC USB token signs an invoice. */
+export interface DscSignatureInfo {
+  certHolder: string;      // CN from the certificate (e.g. "RAJESH KUMAR")
+  certSerial: string;      // hex serial of the signing certificate
+  issuingCA: string;        // issuer common name (e.g. "eMudhra Sub CA")
+  validFrom: string;        // ISO date
+  validTo: string;          // ISO date
+  signedAt: string;         // ISO timestamp of signing
+  signatureHash: string;    // SHA-256 hex of the signed PDF digest
+}
+
 export interface Invoice {
   id: string;
   invoiceNumber: string; // e.g. "INV-2026-0001" (max 16 chars per GST rules)
@@ -100,6 +111,8 @@ export interface Invoice {
   // ── Transporter & E-Way Bill ───────────────────────────────────────
   transporter?: TransporterDetails;
   ewayBill?: EWayBillDetails;
+  // ── Digital Signature ──────────────────────────────────────────────
+  dscSignature?: DscSignatureInfo; // populated after DSC signing
 }
 
 export interface Payment {
@@ -168,9 +181,13 @@ export interface BusinessProfile {
   // ── Bank details (printed on invoice for payment remittance) ──────
   bankDetails?: BankDetails;
   // ── Signature & stamp (printed on invoice footer) ─────────────────
+  signatureMode?: "manual" | "image" | "dsc"; // default: "manual"
   signatureImage?: string;   // base64 data URL of signature
   stampImage?: string;       // base64 data URL of company stamp/seal
   authorizedSignatory?: string; // name of the authorized signatory
+  // ── DSC USB Token settings ──────────────────────────────────────────
+  dscBridgePort?: number;    // local port for DSC signing service (default 27372)
+  dscCertAlias?: string;     // alias/label of the selected certificate on the token
   // ── WhatsApp sharing ────────────────────────────────────────────────
   accountantPhone?: string;     // WhatsApp number for accountant (with country code)
   accountantName?: string;      // display name for the accountant

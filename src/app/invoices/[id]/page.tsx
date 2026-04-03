@@ -41,10 +41,11 @@ import {
   Mail,
 } from "lucide-react";
 import { useHydrated } from "@/lib/use-hydrated";
-import type { InvoiceStatus } from "@/lib/types";
+import type { InvoiceStatus, DscSignatureInfo } from "@/lib/types";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 import { shareToClient, shareToAccountant, shareWithPdf } from "@/lib/whatsapp";
+import { signPdf } from "@/lib/dsc";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -117,6 +118,31 @@ export default function InvoiceDetailPage({
     window.open(mailto, "_blank");
     toast.success("Opening email client");
   }, [invoice, client, profile]);
+
+  // ── DSC signing ────────────────────────────────────────────────────
+  const updateInvoice = useInvoiceStore((s) => s.updateInvoice);
+  const [dscSigning, setDscSigning] = useState(false);
+
+  const handleDscSign = useCallback(async () => {
+    if (!invoice || !profile.dscCertAlias) {
+      toast.error("No DSC certificate configured — check Settings → Signature & Stamp");
+      return;
+    }
+    setDscSigning(true);
+    try {
+      const blob = await generateInvoicePdf(invoice, client, profile);
+      const { signedInfo } = await signPdf(blob, profile.dscCertAlias, profile.dscBridgePort || 27372);
+      updateInvoice(invoice.id, { dscSignature: signedInfo });
+      toast.success(`Digitally signed by ${signedInfo.certHolder}`);
+    } catch (err) {
+      console.error("DSC signing failed:", err);
+      toast.error(
+        `DSC signing failed: ${err instanceof Error ? err.message : "Unknown error"}. Ensure your USB token is plugged in and the signing software is running.`
+      );
+    } finally {
+      setDscSigning(false);
+    }
+  }, [invoice, client, profile, updateInvoice]);
 
   // Extract IEC from registrations (to show below GSTN)
   const iecReg = profile.registrations.find(
@@ -607,12 +633,49 @@ export default function InvoiceDetailPage({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={profile.stampImage} alt="Company stamp" className="mx-auto h-28 w-auto object-contain mb-0.5" />
               )}
-              {profile.signatureImage ? (
+
+              {/* DSC digital signature display */}
+              {invoice.dscSignature ? (
+                <div className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 mb-1">
+                  <p className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 mb-0.5">
+                    Digitally Signed
+                  </p>
+                  <p className="text-[8px] text-muted-foreground leading-snug">
+                    {invoice.dscSignature.certHolder}
+                  </p>
+                  <p className="text-[8px] text-muted-foreground leading-snug">
+                    CA: {invoice.dscSignature.issuingCA}
+                  </p>
+                  <p className="text-[8px] text-muted-foreground leading-snug">
+                    Date: {formatDateIndia(invoice.dscSignature.signedAt)}
+                  </p>
+                  <p className="text-[7px] font-mono text-muted-foreground/70 mt-0.5 break-all">
+                    {invoice.dscSignature.signatureHash.slice(0, 32)}…
+                  </p>
+                </div>
+              ) : (profile.signatureMode ?? "manual") === "image" && profile.signatureImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={profile.signatureImage} alt="Signature" className="mx-auto h-20 w-auto object-contain" />
+              ) : (profile.signatureMode ?? "manual") === "dsc" ? (
+                <div className="flex flex-col items-center gap-1 py-2" data-print-hide>
+                  <button
+                    type="button"
+                    onClick={handleDscSign}
+                    disabled={dscSigning}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors disabled:opacity-50"
+                  >
+                    {dscSigning ? (
+                      <>Signing…</>
+                    ) : (
+                      <>Sign with DSC</>
+                    )}
+                  </button>
+                  <p className="text-[8px] text-muted-foreground">USB token required</p>
+                </div>
               ) : (
                 <div className="h-20 border-b border-dashed border-muted-foreground/30 mb-0.5" />
               )}
+
               <p className="text-[10px] font-semibold mt-0.5">
                 {profile.authorizedSignatory || profile.name}
               </p>

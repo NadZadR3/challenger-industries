@@ -20,8 +20,9 @@ import type { RegistrationNumber, LineItemType } from "@/lib/types";
 import { GST_RATES, UQC_CODES } from "@/lib/gst";
 import { formatCurrency, dollarsToCents } from "@/lib/format";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useHydrated } from "@/lib/use-hydrated";
+import { isDscServiceRunning, listCertificates, type DscCertificate } from "@/lib/dsc";
 import {
   Building,
   MapPin,
@@ -37,6 +38,10 @@ import {
   Landmark,
   PenLine,
   Package,
+  KeyRound,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -53,6 +58,39 @@ export default function SettingsPage() {
   useEffect(() => {
     setForm(profile);
   }, [profile]);
+
+  // ── DSC USB Token state (must be before early return) ─────────────
+  const [dscOnline, setDscOnline] = useState<boolean | null>(null);
+  const [dscCerts, setDscCerts] = useState<DscCertificate[]>([]);
+  const [dscLoading, setDscLoading] = useState(false);
+
+  const signatureMode = form.signatureMode ?? "manual";
+
+  const probeDsc = useCallback(async () => {
+    const port = form.dscBridgePort || 27372;
+    setDscLoading(true);
+    try {
+      const online = await isDscServiceRunning(port);
+      setDscOnline(online);
+      if (online) {
+        const certs = await listCertificates(port);
+        setDscCerts(certs);
+      } else {
+        setDscCerts([]);
+      }
+    } catch {
+      setDscOnline(false);
+      setDscCerts([]);
+    } finally {
+      setDscLoading(false);
+    }
+  }, [form.dscBridgePort]);
+
+  useEffect(() => {
+    if (signatureMode === "dsc") {
+      probeDsc();
+    }
+  }, [signatureMode, probeDsc]);
 
   if (!hydrated) {
     return (
@@ -116,6 +154,7 @@ export default function SettingsPage() {
       },
     }));
   }
+
 
   function addRegistration() {
     setForm((prev) => ({
@@ -817,13 +856,42 @@ export default function SettingsPage() {
               <div>
                 <CardTitle>Signature & Stamp</CardTitle>
                 <CardDescription>
-                  Uploaded images appear in the Authorized Signatory section on invoices.
-                  Leave blank to get a dotted line for manual signing.
+                  Choose how invoices are signed — manual, uploaded image, or DSC USB token.
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* ── Signature Mode Selector ── */}
+            <div className="space-y-2">
+              <Label>Signature Method</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { value: "manual", label: "Manual", icon: PenLine, desc: "Dotted line for hand signing" },
+                  { value: "image", label: "Image Upload", icon: ImageIcon, desc: "Scanned signature image" },
+                  { value: "dsc", label: "DSC USB Token", icon: KeyRound, desc: "Digital Signature Certificate" },
+                ] as const).map(({ value, label, icon: Icon, desc }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, signatureMode: value }))}
+                    className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-colors ${
+                      signatureMode === value
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <Icon className={`h-5 w-5 ${signatureMode === value ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="text-sm font-medium">{label}</span>
+                    <span className="text-[10px] text-muted-foreground leading-tight">{desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* ── Common: Signatory Name ── */}
             <div className="space-y-2">
               <Label htmlFor="authorizedSignatory">Authorized Signatory Name</Label>
               <Input
@@ -836,8 +904,49 @@ export default function SettingsPage() {
                 Falls back to company name if left empty.
               </p>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {/* Signature upload */}
+
+            {/* ── Common: Stamp upload (available for all modes) ── */}
+            <div className="space-y-2">
+              <Label>Company Stamp / Seal</Label>
+              {form.stampImage ? (
+                <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.stampImage}
+                    alt="Company stamp"
+                    className="h-16 max-w-[140px] object-contain"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForm((prev) => ({ ...prev, stampImage: "" }))}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                  <p className="text-xs text-muted-foreground">No stamp uploaded</p>
+                </div>
+              )}
+              <label htmlFor="stamp-upload">
+                <div className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground transition-colors">
+                  <Upload className="h-3.5 w-3.5" />
+                  {form.stampImage ? "Change" : "Upload Stamp"}
+                </div>
+                <input
+                  id="stamp-upload"
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleImageUpload("stampImage")}
+                />
+              </label>
+            </div>
+
+            {/* ── Image Mode: Signature Upload ── */}
+            {signatureMode === "image" && (
               <div className="space-y-2">
                 <Label>Signature Image</Label>
                 {form.signatureImage ? (
@@ -876,47 +985,103 @@ export default function SettingsPage() {
                   />
                 </label>
               </div>
+            )}
 
-              {/* Stamp upload */}
-              <div className="space-y-2">
-                <Label>Company Stamp / Seal</Label>
-                {form.stampImage ? (
-                  <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={form.stampImage}
-                      alt="Company stamp"
-                      className="h-16 max-w-[140px] object-contain"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setForm((prev) => ({ ...prev, stampImage: "" }))}
+            {/* ── DSC Mode: USB Token Config ── */}
+            {signatureMode === "dsc" && (
+              <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-medium">DSC USB Token Configuration</span>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dscBridgePort">Signing Service Port</Label>
+                  <Input
+                    id="dscBridgePort"
+                    type="number"
+                    value={form.dscBridgePort ?? 27372}
+                    onChange={(e) => update("dscBridgePort", parseInt(e.target.value) || 27372)}
+                    placeholder="27372"
+                    className="w-32 font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Port where your DSC signing software (emSigner, eMudhra, etc.) is running.
+                  </p>
+                </div>
+
+                {/* Connection status */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Service status:</span>
+                  {dscLoading ? (
+                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Checking…
+                    </span>
+                  ) : dscOnline === true ? (
+                    <span className="flex items-center gap-1 text-sm text-emerald-500">
+                      <CheckCircle className="h-3.5 w-3.5" /> Connected
+                    </span>
+                  ) : dscOnline === false ? (
+                    <span className="flex items-center gap-1 text-sm text-red-400">
+                      <XCircle className="h-3.5 w-3.5" /> Not reachable
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={probeDsc}
+                    disabled={dscLoading}
+                    className="ml-auto h-7 px-2"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1 ${dscLoading ? "animate-spin" : ""}`} />
+                    Refresh
+                  </Button>
+                </div>
+
+                {/* Certificate selection */}
+                {dscOnline && dscCerts.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Select Certificate</Label>
+                    <Select
+                      value={form.dscCertAlias ?? ""}
+                      onValueChange={(v) => setForm((prev) => ({ ...prev, dscCertAlias: v || undefined }))}
                     >
-                      Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center rounded-lg border border-dashed p-6 text-center">
-                    <p className="text-xs text-muted-foreground">No stamp uploaded</p>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a certificate from the token" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dscCerts.map((cert) => (
+                          <SelectItem key={cert.alias} value={cert.alias}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{cert.cn}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {cert.issuer} · Valid until {cert.validTo}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
-                <label htmlFor="stamp-upload">
-                  <div className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground transition-colors">
-                    <Upload className="h-3.5 w-3.5" />
-                    {form.stampImage ? "Change" : "Upload Stamp"}
-                  </div>
-                  <input
-                    id="stamp-upload"
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={handleImageUpload("stampImage")}
-                  />
-                </label>
+
+                {dscOnline && dscCerts.length === 0 && !dscLoading && (
+                  <p className="text-sm text-amber-500">
+                    No certificates found. Ensure your USB token is plugged in and unlocked.
+                  </p>
+                )}
+
+                {dscOnline === false && (
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Start your DSC signing software (emSigner / eMudhra CertiSign / Sify RA),
+                    plug in your USB token, then click Refresh.
+                  </p>
+                )}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 

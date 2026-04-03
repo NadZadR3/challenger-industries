@@ -341,6 +341,40 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: "#666",
   },
+  dscBox: {
+    borderWidth: 0.5,
+    borderColor: "#22c55e",
+    borderRadius: 3,
+    backgroundColor: "#f0fdf4",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginBottom: 3,
+    alignItems: "center" as const,
+  },
+  dscTitle: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: "#16a34a",
+    marginBottom: 2,
+  },
+  dscDetail: {
+    fontSize: 6,
+    color: "#666",
+    lineHeight: 1.5,
+    textAlign: "center" as const,
+  },
+  dscHash: {
+    fontSize: 5,
+    color: "#999",
+    fontFamily: "Courier",
+    marginTop: 1,
+  },
+  manualLine: {
+    width: 150,
+    borderBottom: "0.5pt dashed #999",
+    marginBottom: 3,
+    height: 50,
+  },
 });
 
 interface InvoicePDFProps {
@@ -799,9 +833,25 @@ function InvoiceCopy({
           {profile.stampImage && (
             <Image src={profile.stampImage} style={styles.stampImage} />
           )}
-          {profile.signatureImage && (
+
+          {invoice.dscSignature ? (
+            <View style={styles.dscBox}>
+              <Text style={styles.dscTitle}>Digitally Signed</Text>
+              <Text style={styles.dscDetail}>{invoice.dscSignature.certHolder}</Text>
+              <Text style={styles.dscDetail}>CA: {invoice.dscSignature.issuingCA}</Text>
+              <Text style={styles.dscDetail}>
+                Date: {formatDateIndia(invoice.dscSignature.signedAt)}
+              </Text>
+              <Text style={styles.dscHash}>
+                {invoice.dscSignature.signatureHash.slice(0, 32)}…
+              </Text>
+            </View>
+          ) : (profile.signatureMode ?? "manual") === "image" && profile.signatureImage ? (
             <Image src={profile.signatureImage} style={styles.signatureImage} />
+          ) : (
+            <View style={styles.manualLine} />
           )}
+
           <Text style={styles.signatoryName}>
             {profile.authorizedSignatory || profile.name}
           </Text>
