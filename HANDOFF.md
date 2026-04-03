@@ -53,7 +53,9 @@ A full-featured GST-compliant invoice management app for Challenger Industries, 
 - **Ship To** — defaults to same as Bill To. Toggle to add a different shipping address.
 - **Transporter & E-Way Bill** — collapsible section on invoice form. Required for inter-state goods > ₹50,000.
 - **Bank Details** — shown on invoice left side, beside the totals box.
-- **Stamp & Signature** — uploaded as base64 in settings, displayed in Authorized Signatory section.
+- **Signature Mode** — 3-way selector in Settings: Manual (dotted line), Image Upload (scanned signature), or DSC USB Token (digital certificate signing via local bridge software).
+- **DSC USB Token** — communicates with local signing middleware (emSigner, eMudhra, Sify RA) on configurable port (default 27372). Lists certificates from USB token, signs PDF, stores `DscSignatureInfo` on the invoice. Signed invoices display cert holder, CA, date, and hash in both web view and PDF.
+- **Stamp** — uploaded as base64 in settings, displayed in Authorized Signatory section (available for all signature modes).
 - **Print layout** — 2-page A4: "Original Copy for Buyer" + "Duplicate Copy for Transporter". Monochrome-safe.
 - **Hydration guard** — `useHydrated()` hook prevents SSR/client mismatch. Every page using Zustand stores must call this.
 
@@ -77,7 +79,7 @@ src/
 │   │   └── [id]/
 │   │       ├── page.tsx    # Client detail with invoice history
 │   │       └── edit/page.tsx  # Edit client with GSTIN validation
-│   ├── settings/page.tsx   # Business profile, addresses, logo, bank, registrations, stamp/signature
+│   ├── settings/page.tsx   # Business profile, addresses, logo, bank, registrations, signature mode (manual/image/DSC)
 │   ├── recurring/page.tsx  # Recurring templates: CRUD, generate on demand, pause/resume
 │   └── reports/page.tsx    # 4 tab reports: Revenue, Aging, Tax (GST), Client
 ├── components/
@@ -93,6 +95,7 @@ src/
     ├── gst.ts              # Indian GST: states, rates, CGST/SGST/IGST split, amount in words
     ├── gstin-validate.ts   # GSTIN validation: format regex + Luhn mod 36 check digit
     ├── use-hydrated.ts     # Client-mount guard for Zustand persist stores
+    ├── dsc.ts              # DSC USB token bridge: status check, list certs, sign PDF via local service
     ├── utils.ts            # cn() utility
     └── store/
         ├── settings-store.ts   # Business profile, bank details, stamp/signature
@@ -191,6 +194,12 @@ The invoice detail page (`invoices/[id]/page.tsx`) renders a print-ready invoice
 - [x] **Phase 6**: Signature & stamp size doubled across screen, PDF, and print CSS
 - [x] **Phase 6**: Deployed to Vercel — https://challenger-industries.vercel.app
 - [x] **Phase 6**: GitHub repo — https://github.com/Maxray77/Challenger-Industries.git
+- [x] **Phase 7**: DSC USB Token digital signature — 3-way signature mode selector (Manual / Image / DSC)
+- [x] **Phase 7**: DSC bridge utility (`src/lib/dsc.ts`) for local signing software communication
+- [x] **Phase 7**: DSC certificate selection from USB token in Settings
+- [x] **Phase 7**: "Sign with DSC" button on invoice detail page, stores `DscSignatureInfo` on invoice
+- [x] **Phase 7**: DSC signature display in web view and PDF (cert holder, CA, date, hash)
+- [x] **Phase 7**: Deployed to Vercel production
 
 ## Remaining Work
 - [ ] Multi-user database (Supabase recommended — 2 users sharing data, auth, real-time sync)
@@ -205,6 +214,13 @@ cd C:\Users\maxra\Documents\Code\challenger-industries
 npm run dev        # http://localhost:3001
 npm run build      # Production build
 ```
+
+## Key Files (Phase 7 — DSC Signing)
+- `src/lib/dsc.ts` — DSC USB token bridge: `isDscServiceRunning()`, `listCertificates()`, `signPdf()`
+- `src/lib/types.ts` — added `signatureMode`, `dscBridgePort`, `dscCertAlias` to `BusinessProfile`; added `DscSignatureInfo` type and `dscSignature` field on `Invoice`
+- `src/app/settings/page.tsx` — 3-way signature mode selector UI, DSC connection status, certificate dropdown
+- `src/app/invoices/[id]/page.tsx` — DSC signing button, signed invoice display, imports `signPdf`
+- `src/components/invoice-pdf.tsx` — DSC signature box in PDF footer (green "Digitally Signed" with cert details)
 
 ## Key Files (Phase 6)
 - `src/lib/generate-pdf.tsx` — shared PDF generation helper (dynamic imports)
