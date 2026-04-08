@@ -21,6 +21,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useInvoiceStore } from "@/lib/store/invoice-store";
 import { useClientStore } from "@/lib/store/client-store";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -41,9 +49,34 @@ export default function InvoicesPage() {
   const hydrated = useHydrated();
   const invoices = useInvoiceStore((s) => s.invoices);
   const deleteInvoice = useInvoiceStore((s) => s.deleteInvoice);
+  const deleteAndRenumber = useInvoiceStore((s) => s.deleteAndRenumber);
   const clients = useClientStore((s) => s.clients);
   const router = useRouter();
   const [tab, setTab] = useState("all");
+
+  // Delete dialog state
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; number: string } | null>(null);
+
+  function requestDelete(id: string, invoiceNumber: string) {
+    if (!invoiceNumber) {
+      // Draft with no number — delete immediately, no dialog needed
+      deleteInvoice(id);
+      return;
+    }
+    setDeleteTarget({ id, number: invoiceNumber });
+  }
+
+  function confirmDeleteKeepGap() {
+    if (!deleteTarget) return;
+    deleteInvoice(deleteTarget.id);
+    setDeleteTarget(null);
+  }
+
+  function confirmDeleteAndRenumber() {
+    if (!deleteTarget) return;
+    deleteAndRenumber(deleteTarget.id);
+    setDeleteTarget(null);
+  }
 
   if (!hydrated) {
     return (
@@ -121,7 +154,7 @@ export default function InvoicesPage() {
                 return (
                   <TableRow key={inv.id}>
                     <TableCell className="font-mono text-sm">
-                      {inv.invoiceNumber}
+                      {inv.invoiceNumber || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>{client?.name || "—"}</TableCell>
                     <TableCell>{formatDate(inv.issueDate)}</TableCell>
@@ -159,7 +192,7 @@ export default function InvoicesPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
-                            onClick={() => deleteInvoice(inv.id)}
+                            onClick={() => requestDelete(inv.id, inv.invoiceNumber)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
@@ -174,6 +207,29 @@ export default function InvoicesPage() {
           </Table>
         </Card>
       )}
+
+      {/* Delete dialog — only shown for finalized invoices */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Invoice {deleteTarget?.number}</DialogTitle>
+            <DialogDescription>
+              This invoice has been finalized. Choose how to handle the remaining invoice numbers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="secondary" onClick={confirmDeleteKeepGap}>
+              Delete &amp; Keep Gap
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteAndRenumber}>
+              Delete &amp; Renumber
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

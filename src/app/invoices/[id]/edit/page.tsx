@@ -52,6 +52,7 @@ export default function EditInvoicePage({
   const router = useRouter();
   const invoice = useInvoiceStore((s) => s.getInvoice(id));
   const updateInvoice = useInvoiceStore((s) => s.updateInvoice);
+  const finalizeInvoice = useInvoiceStore((s) => s.finalizeInvoice);
   const clients = useClientStore((s) => s.clients);
   const profile = useSettingsStore((s) => s.profile);
 
@@ -188,12 +189,10 @@ export default function EditInvoicePage({
   const { subtotal, taxTotal, total } = calculateInvoiceTotals(lineItems, discountCents);
   const gstGroups = groupLineItemsByGSTRate(lineItems, gstType);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function buildUpdateData() {
     const hasTransporter = showTransport && transporter.name.trim();
     const hasEWayBill = showTransport && ewayBill.ewayBillNumber.trim();
-
-    updateInvoice(id, {
+    return {
       clientId,
       issueDate,
       dueDate,
@@ -208,8 +207,21 @@ export default function EditInvoicePage({
       ewayBill: hasEWayBill ? ewayBill : undefined,
       shipToName: differentShipTo && shipToName.trim() ? shipToName : undefined,
       shipToAddress: differentShipTo && shipToAddress.street.trim() ? shipToAddress : undefined,
-    });
-    toast.success("Invoice updated");
+    };
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    updateInvoice(id, buildUpdateData());
+    toast.success("Draft saved");
+    router.push(`/invoices/${id}`);
+  }
+
+  function handleFinalize(e: React.FormEvent) {
+    e.preventDefault();
+    updateInvoice(id, buildUpdateData());
+    finalizeInvoice(id);
+    toast.success("Invoice finalized");
     router.push(`/invoices/${id}`);
   }
 
@@ -217,7 +229,7 @@ export default function EditInvoicePage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Edit Invoice" description={invoice.invoiceNumber} />
+      <PageHeader title="Edit Invoice" description={invoice.invoiceNumber || "Draft"} />
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
@@ -654,7 +666,26 @@ export default function EditInvoicePage({
                   </p>
                 )}
                 <div className="pt-4 space-y-2">
-                  <Button type="submit" className="w-full">Save Changes</Button>
+                  {invoice.status === "draft" ? (
+                    <>
+                      <Button
+                        type="button"
+                        className="w-full"
+                        onClick={handleFinalize}
+                      >
+                        Finalize Invoice
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="secondary"
+                        className="w-full"
+                      >
+                        Save as Draft
+                      </Button>
+                    </>
+                  ) : (
+                    <Button type="submit" className="w-full">Save Changes</Button>
+                  )}
                   <Button type="button" variant="outline" className="w-full" onClick={() => router.back()}>
                     Cancel
                   </Button>

@@ -261,10 +261,17 @@ export default function InvoiceDetailPage({
           </div>
           <div className="text-right shrink-0">
             <h3 className="text-2xl font-bold tracking-tight text-primary/80">
-              INVOICE No.
+              Invoice No.
             </h3>
-            <p className="font-mono text-sm mt-1 font-semibold">
-              {invoice.invoiceNumber}
+            {invoice.invoiceNumber ? (
+              <p className="font-mono text-sm mt-1 font-semibold">
+                {invoice.invoiceNumber}
+              </p>
+            ) : (
+              <p className="text-sm mt-1 text-muted-foreground italic">Draft</p>
+            )}
+            <p className="text-xs mt-1 text-muted-foreground">
+              {formatDateIndia(invoice.issueDate)}
             </p>
             <Badge
               variant="outline"
@@ -308,12 +315,8 @@ export default function InvoiceDetailPage({
           </h3>
         </div>
 
-        {/* Invoice meta: Date, Place of Supply, Tax Type */}
+        {/* Invoice meta: Place of Supply, Tax Type */}
         <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs mb-4">
-          <div>
-            <span className="text-muted-foreground">Date: </span>
-            <span className="font-medium font-mono">{formatDateIndia(invoice.issueDate)}</span>
-          </div>
           {invoice.placeOfSupply && (
             <div>
               <span className="text-muted-foreground">Place of Supply: </span>

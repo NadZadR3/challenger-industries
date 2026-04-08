@@ -63,6 +63,7 @@ export default function NewInvoicePage() {
   const router = useRouter();
   const clients = useClientStore((s) => s.clients);
   const createInvoice = useInvoiceStore((s) => s.createInvoice);
+  const finalizeInvoice = useInvoiceStore((s) => s.finalizeInvoice);
   const profile = useSettingsStore((s) => s.profile);
   const catalogItems = useCatalogStore((s) => s.items);
 
@@ -171,21 +172,10 @@ export default function NewInvoicePage() {
   const { subtotal, taxTotal, total } = calculateInvoiceTotals(lineItems, discountCents);
   const gstGroups = groupLineItemsByGSTRate(lineItems, gstType);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!clientId) {
-      toast.error("Please select a client");
-      return;
-    }
-    if (lineItems.every((li) => !li.description.trim())) {
-      toast.error("Add at least one line item");
-      return;
-    }
-    // Only include transporter/ewayBill if user filled them in
+  function buildInvoiceData() {
     const hasTransporter = showTransport && transporter.name.trim();
     const hasEWayBill = showTransport && ewayBill.ewayBillNumber.trim();
-
-    const invoice = createInvoice({
+    return {
       clientId,
       issueDate,
       dueDate,
@@ -201,8 +191,30 @@ export default function NewInvoicePage() {
       ewayBill: hasEWayBill ? ewayBill : undefined,
       shipToName: differentShipTo && shipToName.trim() ? shipToName : undefined,
       shipToAddress: differentShipTo && shipToAddress.street.trim() ? shipToAddress : undefined,
-    });
-    toast.success(`Invoice ${invoice.invoiceNumber} created`);
+    };
+  }
+
+  function validate() {
+    if (!clientId) { toast.error("Please select a client"); return false; }
+    if (lineItems.every((li) => !li.description.trim())) { toast.error("Add at least one line item"); return false; }
+    return true;
+  }
+
+  function handleSaveDraft(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validate()) return;
+    const invoice = createInvoice(buildInvoiceData());
+    toast.success("Draft saved");
+    router.push(`/invoices/${invoice.id}`);
+  }
+
+  function handleFinalize(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validate()) return;
+    const invoice = createInvoice(buildInvoiceData());
+    finalizeInvoice(invoice.id);
+    // Re-read to get the assigned number
+    toast.success("Invoice finalized");
     router.push(`/invoices/${invoice.id}`);
   }
 
@@ -212,7 +224,7 @@ export default function NewInvoicePage() {
     <div className="space-y-6">
       <PageHeader title="New Invoice" description="Create a new GST tax invoice" />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSaveDraft}>
         <div className="grid gap-6 lg:grid-cols-3">
           {/* ── Left: Form ── */}
           <div className="lg:col-span-2 space-y-6">
@@ -815,8 +827,19 @@ export default function NewInvoicePage() {
                 )}
 
                 <div className="pt-4 space-y-2">
-                  <Button type="submit" className="w-full">
-                    Create Invoice
+                  <Button
+                    type="button"
+                    className="w-full"
+                    onClick={handleFinalize}
+                  >
+                    Finalize Invoice
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    Save as Draft
                   </Button>
                   <Button
                     type="button"

@@ -448,8 +448,12 @@ function InvoiceCopy({
           )}
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={styles.invoiceNoLabel}>INVOICE No.</Text>
-          <Text style={styles.invoiceNoValue}>{invoice.invoiceNumber}</Text>
+          <Text style={styles.invoiceNoLabel}>Invoice No.</Text>
+          <Text style={styles.invoiceNoValue}>{invoice.invoiceNumber || "Draft"}</Text>
+          <Text style={[styles.metaLabel, { marginTop: 4, fontSize: 8, textAlign: "right" }]}>
+            <Text style={styles.metaLabel}>Date: </Text>
+            <Text style={styles.metaValue}>{formatDateIndia(invoice.issueDate)}</Text>
+          </Text>
         </View>
       </View>
 
@@ -477,12 +481,6 @@ function InvoiceCopy({
 
       {/* Meta row */}
       <View style={styles.metaRow}>
-        <Text>
-          <Text style={styles.metaLabel}>Date: </Text>
-          <Text style={styles.metaValue}>
-            {formatDateIndia(invoice.issueDate)}
-          </Text>
-        </Text>
         {invoice.placeOfSupply && (
           <Text>
             <Text style={styles.metaLabel}>Place of Supply: </Text>

@@ -51,6 +51,7 @@ interface SettingsState {
   profile: BusinessProfile;
   updateProfile: (updates: Partial<BusinessProfile>) => void;
   consumeInvoiceNumber: () => number;
+  setNextInvoiceNumber: (n: number) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -71,6 +72,10 @@ export const useSettingsStore = create<SettingsState>()(
         }));
         return current;
       },
+      setNextInvoiceNumber: (n) =>
+        set((state) => ({
+          profile: { ...state.profile, nextInvoiceNumber: n },
+        })),
     }),
     { name: "challenger-settings" }
   )

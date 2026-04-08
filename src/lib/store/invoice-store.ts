@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { nanoid } from "nanoid";
 import type { Invoice, InvoiceStatus, LineItem } from "../types";
-import { generateInvoiceNumber, calculateInvoiceTotals } from "../format";
+import { generateInvoiceNumber, calculateInvoiceTotals, getFinancialYear } from "../format";
 import { useSettingsStore } from "./settings-store";
 
 interface InvoiceState {
@@ -19,8 +19,10 @@ interface InvoiceState {
   ) => Invoice;
   updateInvoice: (id: string, data: Partial<Invoice>) => void;
   deleteInvoice: (id: string) => void;
+  deleteAndRenumber: (id: string) => void;
   getInvoice: (id: string) => Invoice | undefined;
   updateStatus: (id: string, status: InvoiceStatus) => void;
+  finalizeInvoice: (id: string) => void;
   recordPayment: (id: string, amountCents: number) => void;
   getClientInvoices: (clientId: string) => Invoice[];
   markOverdueInvoices: () => number;
@@ -36,10 +38,6 @@ function buildInvoice(
     | "shipToName" | "shipToAddress"
   >
 ): Invoice {
-  const settings = useSettingsStore.getState();
-  const seq = settings.consumeInvoiceNumber();
-  const invoiceNumber = generateInvoiceNumber(settings.profile.invoicePrefix, seq);
-
   const { subtotal, taxTotal, total } = calculateInvoiceTotals(
     data.lineItems,
     data.discount
@@ -48,7 +46,7 @@ function buildInvoice(
   const now = new Date().toISOString();
   return {
     id: nanoid(),
-    invoiceNumber,
+    invoiceNumber: "",  // assigned only on finalization
     clientId: data.clientId,
     status: "draft",
     issueDate: data.issueDate,
@@ -73,6 +71,13 @@ function buildInvoice(
     createdAt: now,
     updatedAt: now,
   };
+}
+
+/** Assign the next sequential invoice number and return it. */
+function assignInvoiceNumber(): string {
+  const settings = useSettingsStore.getState();
+  const seq = settings.consumeInvoiceNumber();
+  return generateInvoiceNumber(settings.profile.invoicePrefix, seq);
 }
 
 export const useInvoiceStore = create<InvoiceState>()(
@@ -111,15 +116,72 @@ export const useInvoiceStore = create<InvoiceState>()(
           invoices: state.invoices.filter((inv) => inv.id !== id),
         })),
 
+      deleteAndRenumber: (id) => {
+        const inv = get().invoices.find((i) => i.id === id);
+        if (!inv) return;
+
+        // Extract the financial year from the invoice number (e.g. "2025-26/003" → "2025-26")
+        const fy = inv.invoiceNumber
+          ? inv.invoiceNumber.split("/")[0]
+          : getFinancialYear(new Date(inv.issueDate));
+
+        set((state) => {
+          // Remove the invoice
+          const remaining = state.invoices.filter((i) => i.id !== id);
+
+          // Resequence all finalized invoices in the same FY, sorted by issueDate then createdAt
+          const inFy = remaining
+            .filter((i) => i.invoiceNumber && i.invoiceNumber.startsWith(fy + "/"))
+            .sort((a, b) =>
+              a.issueDate !== b.issueDate
+                ? a.issueDate.localeCompare(b.issueDate)
+                : a.createdAt.localeCompare(b.createdAt)
+            );
+
+          const renumbered = new Map<string, string>();
+          inFy.forEach((i, idx) => {
+            renumbered.set(i.id, `${fy}/${String(idx + 1).padStart(3, "0")}`);
+          });
+
+          // Update nextInvoiceNumber in settings so future invoices don't collide
+          useSettingsStore.getState().setNextInvoiceNumber(inFy.length + 1);
+
+          return {
+            invoices: remaining.map((i) =>
+              renumbered.has(i.id)
+                ? { ...i, invoiceNumber: renumbered.get(i.id)!, updatedAt: new Date().toISOString() }
+                : i
+            ),
+          };
+        });
+      },
+
       getInvoice: (id) => get().invoices.find((inv) => inv.id === id),
 
       updateStatus: (id, status) =>
         set((state) => ({
-          invoices: state.invoices.map((inv) =>
-            inv.id === id
-              ? { ...inv, status, updatedAt: new Date().toISOString() }
-              : inv
-          ),
+          invoices: state.invoices.map((inv) => {
+            if (inv.id !== id) return inv;
+            // Assign a number when leaving draft status for the first time
+            const invoiceNumber =
+              inv.status === "draft" && status !== "draft" && !inv.invoiceNumber
+                ? assignInvoiceNumber()
+                : inv.invoiceNumber;
+            return { ...inv, status, invoiceNumber, updatedAt: new Date().toISOString() };
+          }),
+        })),
+
+      finalizeInvoice: (id) =>
+        set((state) => ({
+          invoices: state.invoices.map((inv) => {
+            if (inv.id !== id || inv.status !== "draft") return inv;
+            return {
+              ...inv,
+              status: "sent" as InvoiceStatus,
+              invoiceNumber: inv.invoiceNumber || assignInvoiceNumber(),
+              updatedAt: new Date().toISOString(),
+            };
+          }),
         })),
 
       recordPayment: (id, amountCents) =>
