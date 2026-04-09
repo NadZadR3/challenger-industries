@@ -200,20 +200,19 @@ The invoice detail page (`invoices/[id]/page.tsx`) renders a print-ready invoice
 - [x] **Phase 7**: "Sign with DSC" button on invoice detail page, stores `DscSignatureInfo` on invoice
 - [x] **Phase 7**: DSC signature display in web view and PDF (cert holder, CA, date, hash)
 - [x] **Phase 7**: Deployed to Vercel production (via Deploy Hook — see Deployment Notes below)
+- [x] **Phase 8**: Fix PDF font — Helvetica-BoldOblique for bold-italic (was Helvetica-Bold + fontStyle italic)
+- [x] **Phase 8**: Fix PDF currency — removed ₹/Rs. symbols (Helvetica lacks ₹ glyph, rendered as "1"); amounts now plain numbers, currency stated in amount-in-words
+- [x] **Phase 8**: Cancel vs Delete for invoices — Cancel marks invoice as "cancelled" with CANCELLED watermark on PDF while preserving invoice number; Delete permanently removes and renumbers the FY sequence
+- [x] **Phase 8**: Added Cancelled tab to invoices list page
+- [x] **Phase 8**: Migrated GitHub repo to NadZadR3 account, redeployed to Vercel
 
 ## Deployment Notes
 - **Vercel project**: `challenger-industries` on `maxray77s-projects` team (Hobby plan)
 - **Production URL**: https://challenger-industries.vercel.app
-- **GitHub repo**: https://github.com/Maxray77/Challenger-Industries.git
-- **Git-triggered deploys are currently blocked** by Vercel's "Commit Author Required" check — the git email (`nshehzad@raptorrescueusa.org`) is not verified on the Vercel team.
-  - **Fix option 1**: Add the email as a verified email on your GitHub account (GitHub → Settings → Emails), then reconnect GitHub in Vercel Dashboard → Account Settings → Authentication.
-  - **Fix option 2**: Use a **Deploy Hook** (already set up in project Settings → Git → Deploy Hooks). Trigger with:
-    ```powershell
-    Invoke-WebRequest -Uri "<deploy-hook-url>" -Method POST
-    ```
-    or from real curl: `curl.exe -X POST "<deploy-hook-url>"`
+- **GitHub repo**: https://github.com/NadZadR3/challenger-industries.git (migrated from Maxray77)
+- **GitHub account**: NadZadR3 (active), Maxray77 (secondary, still linked)
 - **Vercel CLI** is installed globally (`npm i -g vercel`), project is linked at the main repo root.
-- **Vercel Non-profit**: No dedicated plan. Contact `sponsorships@vercel.com` for case-by-case nonprofit support. Open Source Program accepts quarterly cohorts for free Pro-tier (12 months).
+- **Deploy workflow**: `git push origin main` then `vercel --yes --prod` from the repo root.
 
 ## Remaining Work
 - [ ] Multi-user database (Supabase recommended — 2 users sharing data, auth, real-time sync)
@@ -228,6 +227,12 @@ cd C:\Users\maxra\Documents\Code\challenger-industries
 npm run dev        # http://localhost:3001
 npm run build      # Production build
 ```
+
+## Key Files (Phase 8 — PDF Fixes & Cancel/Delete)
+- `src/lib/format.ts` — added `formatCurrencyPdf()`: plain numbers without currency symbol for PDF rendering
+- `src/components/invoice-pdf.tsx` — uses `formatCurrencyPdf`, fixed Helvetica-BoldOblique for bold-italic, added CANCELLED watermark overlay for cancelled invoices
+- `src/lib/store/invoice-store.ts` — added `cancelInvoice()`: sets status to "cancelled" preserving invoice number
+- `src/app/invoices/page.tsx` — reworked delete dialog with Cancel Invoice vs Delete Permanently options; added Cancelled tab
 
 ## Key Files (Phase 7 — DSC Signing)
 - `src/lib/dsc.ts` — DSC USB token bridge: `isDscServiceRunning()`, `listCertificates()`, `signPdf()`
