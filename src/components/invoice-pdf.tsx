@@ -30,8 +30,7 @@ const styles = StyleSheet.create({
   },
   copyLabel: {
     fontSize: 7,
-    fontStyle: "italic",
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "Helvetica-BoldOblique",
     marginBottom: 4,
     textAlign: "right",
   },
