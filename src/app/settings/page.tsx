@@ -188,6 +188,21 @@ export default function SettingsPage() {
     toast.success("Settings saved");
   }
 
+  // Data backup tracking
+  const [lastBackup, setLastBackup] = useState<string | null>(null);
+  const [dataSize, setDataSize] = useState<string>("");
+  useEffect(() => {
+    setLastBackup(localStorage.getItem("challenger-last-backup"));
+    let bytes = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith("challenger-")) {
+        bytes += (localStorage.getItem(key) || "").length * 2; // UTF-16
+      }
+    }
+    setDataSize(bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(1)} MB`);
+  }, []);
+
   function handleExport() {
     const data: Record<string, string | null> = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -203,6 +218,9 @@ export default function SettingsPage() {
     a.download = `challenger-industries-backup-${new Date().toISOString().split("T")[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    const now = new Date().toISOString();
+    localStorage.setItem("challenger-last-backup", now);
+    setLastBackup(now);
     toast.success("Data exported");
   }
 
@@ -1194,15 +1212,23 @@ export default function SettingsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button type="button" variant="outline" onClick={handleExport}>
                   <Download className="mr-2 h-4 w-4" />
-                  Export Data
+                  Export Backup
                 </Button>
                 <Button type="button" variant="outline" onClick={handleImport}>
                   <Upload className="mr-2 h-4 w-4" />
-                  Import Data
+                  Restore Backup
                 </Button>
+              </div>
+              <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+                <span>Data size: <strong className="text-foreground">{dataSize}</strong></span>
+                {lastBackup ? (
+                  <span>Last backup: <strong className="text-foreground">{new Date(lastBackup).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</strong></span>
+                ) : (
+                  <span className="text-amber-500 font-medium">No backup yet — export your data now!</span>
+                )}
               </div>
               <Separator />
               <div className="rounded-lg bg-muted/50 p-3">

@@ -205,6 +205,13 @@ The invoice detail page (`invoices/[id]/page.tsx`) renders a print-ready invoice
 - [x] **Phase 8**: Cancel vs Delete for invoices — Cancel marks invoice as "cancelled" with CANCELLED watermark on PDF while preserving invoice number; Delete permanently removes and renumbers the FY sequence
 - [x] **Phase 8**: Added Cancelled tab to invoices list page
 - [x] **Phase 8**: Migrated GitHub repo to NadZadR3 account, redeployed to Vercel
+- [x] **Phase 9**: Noto Sans font registered for PDF — ₹ symbol renders correctly via Google Fonts CDN
+- [x] **Phase 9**: formatCurrencyPdf restored to use ₹ symbol (Noto Sans supports full Unicode)
+- [x] **Phase 9**: Cancelled invoice guards — edit page redirects to detail, Edit button hidden in detail & list
+- [x] **Phase 9**: Responsive tables — Date/Due Date hidden on mobile (invoices), Tax ID/Email hidden (clients), columns hidden (recurring)
+- [x] **Phase 9**: Global error boundary (`src/app/error.tsx`)
+- [x] **Phase 9**: Loading/disabled states for PDF download and DSC signing buttons
+- [x] **Phase 9**: Enhanced data backup — last backup timestamp, data size display, export reminder
 
 ## Deployment Notes
 - **Vercel project**: `challenger-industries` on `maxray77s-projects` team (Hobby plan)
@@ -216,10 +223,8 @@ The invoice detail page (`invoices/[id]/page.tsx`) renders a print-ready invoice
 
 ## Remaining Work
 - [ ] Multi-user database (Supabase recommended — 2 users sharing data, auth, real-time sync)
-- [ ] E-invoice integration (NIC portal API)
 - [ ] Recurring auto-generation (cron/scheduler — currently manual "Generate Now")
-- [ ] Responsive polish pass
-- [ ] Empty/loading/error states audit
+- [ ] Vercel Git integration — connect NadZadR3/challenger-industries in Vercel Dashboard → Settings → Git for auto-deploys on push
 
 ## Running the App
 ```bash
@@ -227,6 +232,17 @@ cd C:\Users\maxra\Documents\Code\challenger-industries
 npm run dev        # http://localhost:3001
 npm run build      # Production build
 ```
+
+## Key Files (Phase 9 — Font, Guards, Responsive, Backup)
+- `src/components/invoice-pdf.tsx` — Noto Sans font registration from Google Fonts CDN, all styles migrated from Helvetica to NotoSans
+- `src/lib/format.ts` — `formatCurrencyPdf()` restored to use ₹ symbol (Noto Sans supports it)
+- `src/app/invoices/[id]/edit/page.tsx` — cancelled invoice redirect guard
+- `src/app/invoices/[id]/page.tsx` — Edit button hidden for cancelled invoices
+- `src/app/invoices/page.tsx` — responsive table columns, Edit hidden for cancelled in dropdown
+- `src/app/clients/page.tsx` — responsive table columns (Tax ID/Email hidden on mobile)
+- `src/app/recurring/page.tsx` — responsive table columns
+- `src/app/error.tsx` — global error boundary with "Try again" button
+- `src/app/settings/page.tsx` — enhanced data backup with timestamp, size display, export reminder
 
 ## Key Files (Phase 8 — PDF Fixes & Cancel/Delete)
 - `src/lib/format.ts` — added `formatCurrencyPdf()`: plain numbers without currency symbol for PDF rendering
