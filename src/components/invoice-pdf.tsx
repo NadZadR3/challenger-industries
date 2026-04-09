@@ -8,7 +8,7 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import type { Invoice, Client, BusinessProfile } from "@/lib/types";
-import { formatCurrency, formatDateIndia } from "@/lib/format";
+import { formatCurrencyPdf as formatCurrency, formatDateIndia } from "@/lib/format";
 import { groupLineItemsByGSTRate, getStateName, amountInWords } from "@/lib/gst";
 
 const styles = StyleSheet.create({

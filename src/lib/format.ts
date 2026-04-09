@@ -16,6 +16,22 @@ export function formatCurrency(cents: number, currency = "INR"): string {
 }
 
 /**
+ * Format cents for PDF rendering (Helvetica doesn't support ₹ glyph).
+ * Replaces ₹ with "Rs." so the symbol renders correctly in @react-pdf.
+ * e.g. 150099 → "Rs.1,500.99"
+ */
+export function formatCurrencyPdf(cents: number, currency = "INR"): string {
+  const amount = cents / 100;
+  const locale = currency === "INR" ? "en-IN" : "en-US";
+  const formatted = new Intl.NumberFormat(locale, {
+    style: "decimal",
+    minimumFractionDigits: 2,
+  }).format(amount);
+  const symbol = currency === "INR" ? "Rs." : "$";
+  return `${symbol}${formatted}`;
+}
+
+/**
  * Format an ISO date string for display.
  * e.g. "2026-03-20" → "Mar 20, 2026"
  */
