@@ -145,8 +145,8 @@ export default function InvoicesPage() {
               <TableRow className="bg-muted/30">
                 <TableHead className="font-semibold">Invoice</TableHead>
                 <TableHead className="font-semibold">Client</TableHead>
-                <TableHead className="font-semibold">Date</TableHead>
-                <TableHead className="font-semibold">Due Date</TableHead>
+                <TableHead className="hidden sm:table-cell font-semibold">Date</TableHead>
+                <TableHead className="hidden sm:table-cell font-semibold">Due Date</TableHead>
                 <TableHead className="text-right font-semibold">Amount</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="w-10" />
@@ -161,8 +161,8 @@ export default function InvoicesPage() {
                       {inv.invoiceNumber || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>{client?.name || "—"}</TableCell>
-                    <TableCell>{formatDate(inv.issueDate)}</TableCell>
-                    <TableCell>{formatDate(inv.dueDate)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{formatDate(inv.issueDate)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{formatDate(inv.dueDate)}</TableCell>
                     <TableCell className="text-right font-mono">
                       {formatCurrency(inv.total)}
                     </TableCell>
@@ -186,14 +186,16 @@ export default function InvoicesPage() {
                             <Eye className="mr-2 h-4 w-4" />
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/invoices/${inv.id}/edit`)
-                            }
-                          >
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
+                          {inv.status !== "cancelled" && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(`/invoices/${inv.id}/edit`)
+                              }
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => requestDelete(inv.id, inv.invoiceNumber, inv.status)}

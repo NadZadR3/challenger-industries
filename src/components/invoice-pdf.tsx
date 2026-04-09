@@ -11,9 +11,17 @@ import type { Invoice, Client, BusinessProfile } from "@/lib/types";
 import { formatCurrencyPdf as formatCurrency, formatDateIndia } from "@/lib/format";
 import { groupLineItemsByGSTRate, getStateName, amountInWords } from "@/lib/gst";
 
+Font.register({
+  family: "NotoSans",
+  fonts: [
+    { src: "https://fonts.gstatic.com/s/notosans/v36/o-0mIhZia3gE2Lpssa4nxn9QRBA.ttf", fontWeight: 400 },
+    { src: "https://fonts.gstatic.com/s/notosans/v36/o-0NIhZia3gE2Lpssa4nxn9QYxEM.ttf", fontWeight: 700 },
+  ],
+});
+
 const styles = StyleSheet.create({
   page: {
-    fontFamily: "Helvetica",
+    fontFamily: "NotoSans",
     fontSize: 9,
     padding: 40,
     color: "#111",
@@ -30,7 +38,9 @@ const styles = StyleSheet.create({
   },
   copyLabel: {
     fontSize: 7,
-    fontFamily: "Helvetica-BoldOblique",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
+    fontStyle: "italic",
     marginBottom: 4,
     textAlign: "right",
   },
@@ -44,12 +54,14 @@ const styles = StyleSheet.create({
   },
   gstnLabel: {
     fontSize: 7,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     letterSpacing: 1,
     color: "#666",
   },
   gstnValue: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     fontSize: 9,
   },
   iecLine: {
@@ -65,7 +77,8 @@ const styles = StyleSheet.create({
   },
   companyName: {
     fontSize: 14,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
   },
   companyAddress: {
     fontSize: 8,
@@ -75,12 +88,14 @@ const styles = StyleSheet.create({
   },
   invoiceNoLabel: {
     fontSize: 16,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     color: "#333",
     textAlign: "right",
   },
   invoiceNoValue: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     fontSize: 10,
     textAlign: "right",
     marginTop: 2,
@@ -99,7 +114,8 @@ const styles = StyleSheet.create({
     fontSize: 7,
   },
   regLabel: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     letterSpacing: 0.5,
     color: "#666",
   },
@@ -110,12 +126,14 @@ const styles = StyleSheet.create({
     padding: "5 10",
     marginBottom: 12,
     fontSize: 8,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     color: "#B8860B",
   },
   taxInvoiceHeading: {
     textAlign: "center",
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     fontSize: 10,
     letterSpacing: 3,
     borderTop: "0.5pt solid #333",
@@ -134,7 +152,8 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   metaValue: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
   },
   addressGrid: {
     flexDirection: "row",
@@ -146,14 +165,16 @@ const styles = StyleSheet.create({
   },
   addressTitle: {
     fontSize: 7,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     color: "#666",
     letterSpacing: 1,
     marginBottom: 4,
     textTransform: "uppercase",
   },
   addressName: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     fontSize: 9,
   },
   addressLine: {
@@ -179,7 +200,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   thText: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     fontSize: 8,
   },
   tdText: {
@@ -206,7 +228,8 @@ const styles = StyleSheet.create({
   },
   transportTitle: {
     fontSize: 7,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     letterSpacing: 0.5,
     color: "#666",
     marginBottom: 3,
@@ -232,7 +255,8 @@ const styles = StyleSheet.create({
   },
   bankTitle: {
     fontSize: 7,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     letterSpacing: 0.5,
     color: "#666",
     marginBottom: 4,
@@ -244,7 +268,8 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
   },
   bankBold: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     fontSize: 8,
   },
   totalsBox: {
@@ -265,10 +290,11 @@ const styles = StyleSheet.create({
   },
   totalsValue: {
     fontSize: 8,
-    fontFamily: "Helvetica",
+    fontFamily: "NotoSans",
   },
   totalsBold: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     fontSize: 10,
   },
   totalsWords: {
@@ -287,7 +313,8 @@ const styles = StyleSheet.create({
   },
   gstGroupTitle: {
     fontSize: 6,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     color: "#666",
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -332,7 +359,8 @@ const styles = StyleSheet.create({
     maxWidth: 200,
   },
   signatoryName: {
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     fontSize: 8,
     marginTop: 2,
   },
@@ -352,7 +380,8 @@ const styles = StyleSheet.create({
   },
   dscTitle: {
     fontSize: 7,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     color: "#16a34a",
     marginBottom: 2,
   },
@@ -381,7 +410,8 @@ const styles = StyleSheet.create({
     right: "10%",
     textAlign: "center",
     fontSize: 60,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "NotoSans",
+    fontWeight: 700,
     color: "#dc262640",
     letterSpacing: 12,
     transform: "rotate(-30deg)",
@@ -616,7 +646,7 @@ function InvoiceCopy({
               style={[
                 styles.tdText,
                 styles.colTaxable,
-                { fontFamily: "Helvetica-Bold" },
+                { fontFamily: "NotoSans", fontWeight: 700 },
               ]}
             >
               {formatCurrency(item.amount)}
@@ -657,7 +687,7 @@ function InvoiceCopy({
           {invoice.ewayBill?.ewayBillNumber && (
             <View style={styles.transportBox}>
               <Text style={styles.transportTitle}>E-Way Bill</Text>
-              <Text style={[styles.transportLine, { fontFamily: "Helvetica-Bold", fontSize: 9 }]}>
+              <Text style={[styles.transportLine, { fontFamily: "NotoSans", fontWeight: 700, fontSize: 9 }]}>
                 {invoice.ewayBill.ewayBillNumber}
               </Text>
               {invoice.ewayBill.ewayBillDate && (
@@ -774,10 +804,10 @@ function InvoiceCopy({
               )}
               <View style={[styles.divider, { marginTop: 2 }]} />
               <View style={styles.totalsRow}>
-                <Text style={[styles.totalsLabel, { fontFamily: "Helvetica-Bold", fontSize: 7 }]}>
+                <Text style={[styles.totalsLabel, { fontFamily: "NotoSans", fontWeight: 700, fontSize: 7 }]}>
                   Total GST
                 </Text>
-                <Text style={[styles.totalsValue, { fontFamily: "Helvetica-Bold", fontSize: 7 }]}>
+                <Text style={[styles.totalsValue, { fontFamily: "NotoSans", fontWeight: 700, fontSize: 7 }]}>
                   {formatCurrency(invoice.taxTotal)}
                 </Text>
               </View>
@@ -817,10 +847,10 @@ function InvoiceCopy({
               </View>
               <View style={styles.divider} />
               <View style={styles.totalsRow}>
-                <Text style={[styles.totalsLabel, { fontFamily: "Helvetica-Bold" }]}>
+                <Text style={[styles.totalsLabel, { fontFamily: "NotoSans", fontWeight: 700 }]}>
                   Balance Due
                 </Text>
-                <Text style={[styles.totalsValue, { fontFamily: "Helvetica-Bold" }]}>
+                <Text style={[styles.totalsValue, { fontFamily: "NotoSans", fontWeight: 700 }]}>
                   {formatCurrency(invoice.balanceDue)}
                 </Text>
               </View>

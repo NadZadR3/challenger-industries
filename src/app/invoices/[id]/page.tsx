@@ -769,10 +769,12 @@ export default function InvoiceDetailPage({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Link href={`/invoices/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" })}>
-          <Pencil className="mr-2 h-3 w-3" />
-          Edit
-        </Link>
+        {invoice.status !== "cancelled" && (
+          <Link href={`/invoices/${id}/edit`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <Pencil className="mr-2 h-3 w-3" />
+            Edit
+          </Link>
+        )}
         {invoice.status === "draft" && (
           <Button size="sm" onClick={markSent}>
             <Send className="mr-2 h-3 w-3" />

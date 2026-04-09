@@ -141,6 +141,11 @@ export default function EditInvoicePage({
     );
   }
 
+  if (invoice.status === "cancelled") {
+    router.push(`/invoices/${invoice.id}`);
+    return null;
+  }
+
   function handlePlaceOfSupplyChange(code: string) {
     setPlaceOfSupply(code);
     setGstType(resolveGSTType(supplierCode, code));

@@ -75,8 +75,8 @@ export default function ClientsPage() {
             <TableHeader>
               <TableRow className="bg-muted/30">
                 <TableHead className="font-semibold">Company Name</TableHead>
-                <TableHead className="font-semibold">GST / Tax ID</TableHead>
-                <TableHead className="font-semibold">Email</TableHead>
+                <TableHead className="hidden sm:table-cell font-semibold">GST / Tax ID</TableHead>
+                <TableHead className="hidden sm:table-cell font-semibold">Email</TableHead>
                 <TableHead className="text-right font-semibold">Total Billed</TableHead>
                 <TableHead className="text-right font-semibold">Invoices</TableHead>
                 <TableHead className="w-10" />
@@ -96,8 +96,8 @@ export default function ClientsPage() {
                     <TableCell className="font-medium">
                       {client.name}
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{client.taxId || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="hidden sm:table-cell font-mono text-xs">{client.taxId || "—"}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-muted-foreground">
                       {client.email || "—"}
                     </TableCell>
                     <TableCell className="text-right font-mono">

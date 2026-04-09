@@ -16,16 +16,17 @@ export function formatCurrency(cents: number, currency = "INR"): string {
 }
 
 /**
- * Format cents for PDF rendering — numbers only, no currency symbol.
- * Helvetica doesn't support ₹ glyph; currency is shown in amountInWords.
+ * Format cents for PDF rendering — full currency symbol included.
+ * Noto Sans supports ₹ glyph natively.
  * Uses en-IN locale for Indian number system (lakhs/crores).
- * e.g. 150099 → "1,500.99"
+ * e.g. 150099 → "₹1,500.99"
  */
 export function formatCurrencyPdf(cents: number, currency = "INR"): string {
   const amount = cents / 100;
   const locale = currency === "INR" ? "en-IN" : "en-US";
   return new Intl.NumberFormat(locale, {
-    style: "decimal",
+    style: "currency",
+    currency,
     minimumFractionDigits: 2,
   }).format(amount);
 }

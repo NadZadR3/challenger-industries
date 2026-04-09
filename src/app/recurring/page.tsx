@@ -388,9 +388,9 @@ export default function RecurringPage() {
                 <TableRow>
                   <TableHead>Client</TableHead>
                   <TableHead>Interval</TableHead>
-                  <TableHead>Items</TableHead>
+                  <TableHead className="hidden sm:table-cell">Items</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Next Date</TableHead>
+                  <TableHead className="hidden sm:table-cell">Next Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[50px]" />
                 </TableRow>
@@ -409,11 +409,11 @@ export default function RecurringPage() {
                         {client?.name || "Unknown"}
                       </TableCell>
                       <TableCell className="capitalize">{t.interval}</TableCell>
-                      <TableCell>{t.lineItems.length} item{t.lineItems.length !== 1 ? "s" : ""}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{t.lineItems.length} item{t.lineItems.length !== 1 ? "s" : ""}</TableCell>
                       <TableCell className="text-right font-mono">
                         {formatCurrency(total + tax)}
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="hidden sm:table-cell text-sm">
                         {t.nextGenerationDate ? formatDate(t.nextGenerationDate) : "—"}
                       </TableCell>
                       <TableCell>
