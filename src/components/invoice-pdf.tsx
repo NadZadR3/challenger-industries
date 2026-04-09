@@ -374,6 +374,18 @@ const styles = StyleSheet.create({
     marginBottom: 3,
     height: 50,
   },
+  cancelledWatermark: {
+    position: "absolute",
+    top: "35%",
+    left: "10%",
+    right: "10%",
+    textAlign: "center",
+    fontSize: 60,
+    fontFamily: "Helvetica-Bold",
+    color: "#dc262640",
+    letterSpacing: 12,
+    transform: "rotate(-30deg)",
+  },
 });
 
 interface InvoicePDFProps {
@@ -402,6 +414,10 @@ function InvoiceCopy({
 
   return (
     <Page size="A4" style={styles.page}>
+      {/* CANCELLED watermark */}
+      {invoice.status === "cancelled" && (
+        <Text style={styles.cancelledWatermark}>CANCELLED</Text>
+      )}
       {/* Header: Logo + GSTN/IEC */}
       <View style={styles.headerRow}>
         {profile.logo ? (

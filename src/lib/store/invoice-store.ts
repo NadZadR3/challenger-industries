@@ -18,6 +18,7 @@ interface InvoiceState {
     >
   ) => Invoice;
   updateInvoice: (id: string, data: Partial<Invoice>) => void;
+  cancelInvoice: (id: string) => void;
   deleteInvoice: (id: string) => void;
   deleteAndRenumber: (id: string) => void;
   getInvoice: (id: string) => Invoice | undefined;
@@ -110,6 +111,15 @@ export const useInvoiceStore = create<InvoiceState>()(
           });
           return { invoices };
         }),
+
+      cancelInvoice: (id) =>
+        set((state) => ({
+          invoices: state.invoices.map((inv) =>
+            inv.id === id
+              ? { ...inv, status: "cancelled" as InvoiceStatus, updatedAt: new Date().toISOString() }
+              : inv
+          ),
+        })),
 
       deleteInvoice: (id) =>
         set((state) => ({

@@ -33,7 +33,7 @@ import { useInvoiceStore } from "@/lib/store/invoice-store";
 import { useClientStore } from "@/lib/store/client-store";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useHydrated } from "@/lib/use-hydrated";
-import { Plus, MoreHorizontal, FileText, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, MoreHorizontal, FileText, Eye, Pencil, Trash2, Ban } from "lucide-react";
 import type { InvoiceStatus } from "@/lib/types";
 import { useState } from "react";
 
@@ -48,27 +48,28 @@ const statusColors: Record<InvoiceStatus, string> = {
 export default function InvoicesPage() {
   const hydrated = useHydrated();
   const invoices = useInvoiceStore((s) => s.invoices);
-  const deleteInvoice = useInvoiceStore((s) => s.deleteInvoice);
+  const cancelInvoice = useInvoiceStore((s) => s.cancelInvoice);
   const deleteAndRenumber = useInvoiceStore((s) => s.deleteAndRenumber);
+  const deleteInvoice = useInvoiceStore((s) => s.deleteInvoice);
   const clients = useClientStore((s) => s.clients);
   const router = useRouter();
   const [tab, setTab] = useState("all");
 
   // Delete dialog state
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; number: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; number: string; status: string } | null>(null);
 
-  function requestDelete(id: string, invoiceNumber: string) {
+  function requestDelete(id: string, invoiceNumber: string, status: string) {
     if (!invoiceNumber) {
       // Draft with no number — delete immediately, no dialog needed
       deleteInvoice(id);
       return;
     }
-    setDeleteTarget({ id, number: invoiceNumber });
+    setDeleteTarget({ id, number: invoiceNumber, status });
   }
 
-  function confirmDeleteKeepGap() {
+  function confirmCancel() {
     if (!deleteTarget) return;
-    deleteInvoice(deleteTarget.id);
+    cancelInvoice(deleteTarget.id);
     setDeleteTarget(null);
   }
 
@@ -116,6 +117,9 @@ export default function InvoicesPage() {
           </TabsTrigger>
           <TabsTrigger value="overdue">
             Overdue ({invoices.filter((i) => i.status === "overdue").length})
+          </TabsTrigger>
+          <TabsTrigger value="cancelled">
+            Cancelled ({invoices.filter((i) => i.status === "cancelled").length})
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -192,7 +196,7 @@ export default function InvoicesPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
-                            onClick={() => requestDelete(inv.id, inv.invoiceNumber)}
+                            onClick={() => requestDelete(inv.id, inv.invoiceNumber, inv.status)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
@@ -208,24 +212,48 @@ export default function InvoicesPage() {
         </Card>
       )}
 
-      {/* Delete dialog — only shown for finalized invoices */}
+      {/* Cancel / Delete dialog — only shown for finalized invoices */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete Invoice {deleteTarget?.number}</DialogTitle>
+            <DialogTitle>Invoice {deleteTarget?.number}</DialogTitle>
             <DialogDescription>
-              This invoice has been finalized. Choose how to handle the remaining invoice numbers.
+              Choose how to handle this invoice.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <div className="space-y-3 py-2">
+            {deleteTarget?.status !== "cancelled" && (
+              <button
+                onClick={confirmCancel}
+                className="w-full flex items-start gap-3 rounded-lg border p-4 text-left hover:bg-muted/50 transition-colors"
+              >
+                <Ban className="h-5 w-5 mt-0.5 text-amber-500 shrink-0" />
+                <div>
+                  <p className="font-medium">Cancel Invoice</p>
+                  <p className="text-sm text-muted-foreground">
+                    Mark as cancelled. The invoice number ({deleteTarget?.number}) stays in the records
+                    and the PDF will show &ldquo;CANCELLED&rdquo;.
+                  </p>
+                </div>
+              </button>
+            )}
+            <button
+              onClick={confirmDeleteAndRenumber}
+              className="w-full flex items-start gap-3 rounded-lg border border-destructive/30 p-4 text-left hover:bg-destructive/5 transition-colors"
+            >
+              <Trash2 className="h-5 w-5 mt-0.5 text-destructive shrink-0" />
+              <div>
+                <p className="font-medium text-destructive">Delete Permanently</p>
+                <p className="text-sm text-muted-foreground">
+                  Remove the invoice completely and renumber all remaining invoices
+                  in the same financial year to keep the sequence intact.
+                </p>
+              </div>
+            </button>
+          </div>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Cancel
-            </Button>
-            <Button variant="secondary" onClick={confirmDeleteKeepGap}>
-              Delete &amp; Keep Gap
-            </Button>
-            <Button variant="destructive" onClick={confirmDeleteAndRenumber}>
-              Delete &amp; Renumber
+              Go Back
             </Button>
           </DialogFooter>
         </DialogContent>
